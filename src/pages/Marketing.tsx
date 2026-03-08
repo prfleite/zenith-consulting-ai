@@ -443,7 +443,7 @@ function CampaignsTab({ companyId }: { companyId: string }) {
   const { data: campaigns } = useQuery({
     queryKey: ["marketing-campaigns"],
     queryFn: async () => {
-      const { data } = await supabase.from("marketing_campaigns").select("*, client:client_accounts(name)").order("created_at", { ascending: false });
+      const { data } = await (supabase.from("marketing_campaigns") as any).select("*, client:client_accounts(name)").order("created_at", { ascending: false });
       return data || [];
     },
   });
