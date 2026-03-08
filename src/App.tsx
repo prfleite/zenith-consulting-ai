@@ -17,6 +17,11 @@ import Timesheets from "./pages/Timesheets";
 import Expenses from "./pages/Expenses";
 import Billing from "./pages/Billing";
 import AIInsights from "./pages/AIInsights";
+import Knowledge from "./pages/Knowledge";
+import Portal from "./pages/Portal";
+import Analytics from "./pages/Analytics";
+import Resources from "./pages/Resources";
+import Subscription from "./pages/Subscription";
 import Reports from "./pages/Reports";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -24,7 +29,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { session, loading } = useAuth();
+  const { session, loading, profile } = useAuth();
 
   if (loading) {
     return (
@@ -43,6 +48,19 @@ function AppRoutes() {
     );
   }
 
+  // Client users go to portal
+  if (profile?.role === "client_user") {
+    return (
+      <AppLayout>
+        <Routes>
+          <Route path="/portal" element={<Portal />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/portal" replace />} />
+        </Routes>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <Routes>
@@ -56,11 +74,14 @@ function AppRoutes() {
         <Route path="/timesheets" element={<Timesheets />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/billing" element={<Billing />} />
-        <Route path="/knowledge" element={<AIInsights />} />
+        <Route path="/knowledge" element={<Knowledge />} />
         <Route path="/ai-insights" element={<AIInsights />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/resources" element={<Resources />} />
+        <Route path="/subscription" element={<Subscription />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/portal" element={<Dashboard />} />
+        <Route path="/portal" element={<Portal />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

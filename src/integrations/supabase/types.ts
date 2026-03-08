@@ -136,6 +136,60 @@ export type Database = {
           },
         ]
       }
+      ai_usage_logs: {
+        Row: {
+          company_id: string
+          context_id: string | null
+          context_type: string
+          cost_usd: number
+          created_at: string
+          id: string
+          input_tokens: number
+          model_name: string
+          output_tokens: number
+          user_id: string | null
+        }
+        Insert: {
+          company_id: string
+          context_id?: string | null
+          context_type: string
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          model_name: string
+          output_tokens?: number
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          context_id?: string | null
+          context_type?: string
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          model_name?: string
+          output_tokens?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_accounts: {
         Row: {
           annual_revenue: number | null
@@ -317,6 +371,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      company_subscriptions: {
+        Row: {
+          ai_credits_balance: number
+          company_id: string
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          plan_id: string
+          status: string
+          stripe_subscription_id: string | null
+        }
+        Insert: {
+          ai_credits_balance?: number
+          company_id: string
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_subscription_id?: string | null
+        }
+        Update: {
+          ai_credits_balance?: number
+          company_id?: string
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
@@ -923,6 +1028,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          ai_credits_included: number
+          created_at: string
+          features_json: Json
+          id: string
+          is_active: boolean
+          max_users: number
+          name: string
+          price_annual: number
+          price_monthly: number
+        }
+        Insert: {
+          ai_credits_included?: number
+          created_at?: string
+          features_json?: Json
+          id?: string
+          is_active?: boolean
+          max_users?: number
+          name: string
+          price_annual?: number
+          price_monthly?: number
+        }
+        Update: {
+          ai_credits_included?: number
+          created_at?: string
+          features_json?: Json
+          id?: string
+          is_active?: boolean
+          max_users?: number
+          name?: string
+          price_annual?: number
+          price_monthly?: number
+        }
+        Relationships: []
       }
       time_entries: {
         Row: {

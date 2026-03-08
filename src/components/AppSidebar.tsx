@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Target, FolderKanban, Clock, Receipt, BookOpen, Settings, ChevronLeft, ChevronRight, Sparkles, LogOut, Globe, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, Target, FolderKanban, Clock, Receipt, BookOpen, Settings, ChevronLeft, ChevronRight, Sparkles, LogOut, Globe, DollarSign, BarChart3, Brain, UserCheck, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,7 +12,11 @@ const staffNavItems = [
   { icon: Clock, label: "Timesheets", path: "/timesheets" },
   { icon: Receipt, label: "Despesas", path: "/expenses" },
   { icon: DollarSign, label: "Faturamento", path: "/billing" },
+  { icon: UserCheck, label: "Recursos", path: "/resources" },
   { icon: BookOpen, label: "Conhecimento", path: "/knowledge" },
+  { icon: Brain, label: "IA Insights", path: "/ai-insights" },
+  { icon: BarChart3, label: "Analytics", path: "/analytics" },
+  { icon: CreditCard, label: "Planos", path: "/subscription" },
   { icon: Settings, label: "Configurações", path: "/settings" },
 ];
 
@@ -51,7 +55,6 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {/* User info + logout */}
       <div className="p-3 border-t border-sidebar-border space-y-2">
         {!collapsed && profile && (
           <div className="px-3 py-2">

@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
-import { TrendingUp, Users, FolderKanban, DollarSign, ArrowUpRight, Clock } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { TrendingUp, Users, FolderKanban, DollarSign, ArrowUpRight, Clock, Sparkles, Send, Brain } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAIChat } from "@/lib/ai/useAIChat";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
@@ -14,6 +16,9 @@ export default function Dashboard() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [topProjects, setTopProjects] = useState<any[]>([]);
+  const [showBriefing, setShowBriefing] = useState(false);
+  const { messages, isLoading: aiLoading, sendMessage } = useAIChat({ contextType: "executive_briefing" });
+  const briefingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -31,8 +36,6 @@ export default function Dashboard() {
       setInvoices(iRes.data || []);
       setActivities(aRes.data || []);
       setTopProjects(tpRes.data || []);
-
-      // Week hours
       const today = new Date();
       const monday = new Date(today);
       monday.setDate(today.getDate() - today.getDay() + 1);
@@ -56,6 +59,12 @@ export default function Dashboard() {
     return Object.values(months).sort((a, b) => a.month.localeCompare(b.month)).slice(-8);
   }, [invoices]);
 
+  const generateBriefing = async () => {
+    setShowBriefing(true);
+    const context = `KPIs atuais:\n- Clientes: ${clientCount}\n- Projetos ativos: ${activeProjects}\n- Pipeline: R$ ${pipelineValue.toLocaleString()}\n- Receita recebida: R$ ${totalReceived.toLocaleString()}\n- Horas esta semana: ${weekHours}h\n\nProjetos em destaque: ${topProjects.map(p => p.name).join(", ")}`;
+    await sendMessage("Gere um briefing executivo semanal completo com análise dos KPIs, riscos e recomendações.", context);
+  };
+
   const metrics = [
     { label: "Receita Recebida", value: `R$ ${(totalReceived / 1000).toFixed(0)}k`, icon: DollarSign },
     { label: "Clientes Ativos", value: String(clientCount), icon: Users },
@@ -70,10 +79,31 @@ export default function Dashboard() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Visão geral da sua consultoria</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" /> {weekHours}h esta semana
+        <div className="flex items-center gap-3">
+          <Button variant="gold-outline" size="sm" onClick={generateBriefing} disabled={aiLoading}>
+            <Sparkles className="w-4 h-4" /> {aiLoading ? "Gerando..." : "Briefing Executivo IA"}
+          </Button>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4" /> {weekHours}h esta semana
+          </div>
         </div>
       </div>
+
+      {/* Executive Briefing */}
+      {showBriefing && messages.length > 0 && (
+        <div className="bg-card rounded-xl border border-gold-subtle p-6 shadow-gold">
+          <div className="flex items-center gap-2 mb-4">
+            <Brain className="w-5 h-5 text-gold" />
+            <h3 className="font-heading font-semibold text-foreground">Briefing Executivo IA</h3>
+            {aiLoading && <div className="w-2 h-2 rounded-full bg-gold animate-pulse ml-auto" />}
+          </div>
+          <div ref={briefingRef} className="max-h-[300px] overflow-y-auto">
+            {messages.filter(m => m.role === "assistant").map((msg, i) => (
+              <div key={i} className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
