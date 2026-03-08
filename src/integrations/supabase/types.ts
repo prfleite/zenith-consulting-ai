@@ -62,6 +62,47 @@ export type Database = {
           },
         ]
       }
+      ad_accounts: {
+        Row: {
+          access_token_encrypted: string | null
+          account_id: string | null
+          account_name: string | null
+          company_id: string
+          created_at: string
+          id: string
+          platform: string
+          status: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          platform?: string
+          status?: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          platform?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_accounts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_messages: {
         Row: {
           ai_thread_id: string
@@ -338,6 +379,63 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_website_analyses: {
+        Row: {
+          ai_provider_used: string | null
+          analysis_data: Json | null
+          brand_analysis: Json | null
+          client_id: string
+          company_id: string
+          competitor_analysis: Json | null
+          created_at: string
+          id: string
+          recommendations: Json | null
+          seo_data: Json | null
+          url: string
+        }
+        Insert: {
+          ai_provider_used?: string | null
+          analysis_data?: Json | null
+          brand_analysis?: Json | null
+          client_id: string
+          company_id: string
+          competitor_analysis?: Json | null
+          created_at?: string
+          id?: string
+          recommendations?: Json | null
+          seo_data?: Json | null
+          url: string
+        }
+        Update: {
+          ai_provider_used?: string | null
+          analysis_data?: Json | null
+          brand_analysis?: Json | null
+          client_id?: string
+          company_id?: string
+          competitor_analysis?: Json | null
+          created_at?: string
+          id?: string
+          recommendations?: Json | null
+          seo_data?: Json | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_website_analyses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_website_analyses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -643,6 +741,189 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          ai_generated: boolean | null
+          budget: number | null
+          clicks: number | null
+          client_id: string
+          company_id: string
+          conversions: number | null
+          created_at: string
+          end_date: string | null
+          id: string
+          impressions: number | null
+          name: string
+          roas: number | null
+          spent: number | null
+          start_date: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          budget?: number | null
+          clicks?: number | null
+          client_id: string
+          company_id: string
+          conversions?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          impressions?: number | null
+          name: string
+          roas?: number | null
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          type?: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          budget?: number | null
+          clicks?: number | null
+          client_id?: string
+          company_id?: string
+          conversions?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          impressions?: number | null
+          name?: string
+          roas?: number | null
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_flows: {
+        Row: {
+          ai_generated: boolean | null
+          client_id: string
+          company_id: string
+          created_at: string
+          description: string | null
+          flow_data: Json | null
+          id: string
+          name: string
+          niche: string | null
+          performance_data: Json | null
+          status: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          client_id: string
+          company_id: string
+          created_at?: string
+          description?: string | null
+          flow_data?: Json | null
+          id?: string
+          name: string
+          niche?: string | null
+          performance_data?: Json | null
+          status?: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          flow_data?: Json | null
+          id?: string
+          name?: string
+          niche?: string | null
+          performance_data?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_flows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_flows_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_strategies: {
+        Row: {
+          ai_generated: boolean | null
+          branding_data: Json | null
+          client_id: string
+          company_id: string
+          content_calendar: Json | null
+          created_at: string
+          id: string
+          kpi_targets: Json | null
+          niche: string | null
+          strategy_data: Json | null
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          branding_data?: Json | null
+          client_id: string
+          company_id: string
+          content_calendar?: Json | null
+          created_at?: string
+          id?: string
+          kpi_targets?: Json | null
+          niche?: string | null
+          strategy_data?: Json | null
+        }
+        Update: {
+          ai_generated?: boolean | null
+          branding_data?: Json | null
+          client_id?: string
+          company_id?: string
+          content_calendar?: Json | null
+          created_at?: string
+          id?: string
+          kpi_targets?: Json | null
+          niche?: string | null
+          strategy_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_strategies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_strategies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1135,6 +1416,70 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unified_inbox: {
+        Row: {
+          campaign_id: string | null
+          client_id: string | null
+          company_id: string
+          created_at: string
+          direction: string
+          id: string
+          message: string
+          platform: string
+          read: boolean | null
+          sender_id: string | null
+          sender_name: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          direction?: string
+          id?: string
+          message: string
+          platform?: string
+          read?: boolean | null
+          sender_id?: string | null
+          sender_name: string
+        }
+        Update: {
+          campaign_id?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          message?: string
+          platform?: string
+          read?: boolean | null
+          sender_id?: string | null
+          sender_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_inbox_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_inbox_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_inbox_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
