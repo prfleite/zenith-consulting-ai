@@ -1,71 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Brain, Send, Sparkles, TrendingUp, AlertTriangle, Lightbulb, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const insights = [
-  {
-    icon: TrendingUp,
-    title: "Oportunidade de Upsell",
-    description: "TechCorp Brasil está expandindo para novos mercados. Propor consultoria de internacionalização pode gerar +R$ 400K em receita.",
-    type: "opportunity",
-  },
-  {
-    icon: AlertTriangle,
-    title: "Risco de Churn",
-    description: "Energia Sustentável não tem projetos ativos há 45 dias. Recomenda-se contato imediato com Lucia Ferreira.",
-    type: "risk",
-  },
-  {
-    icon: Lightbulb,
-    title: "Benchmark de Mercado",
-    description: "Sua taxa de retenção (94.8%) está 12% acima da média do setor. Destaque isso em propostas comerciais.",
-    type: "insight",
-  },
-  {
-    icon: BarChart3,
-    title: "Previsão de Receita",
-    description: "Com base na pipeline atual, a receita projetada para Q2 é de R$ 234K, um aumento de 18% vs Q1.",
-    type: "forecast",
-  },
-];
-
-const typeColors = {
-  opportunity: "border-success/30 bg-success/5",
-  risk: "border-destructive/30 bg-destructive/5",
-  insight: "border-gold/30 bg-gold/5",
-  forecast: "border-info/30 bg-info/5",
-};
-
-const typeIconColors = {
-  opportunity: "text-success",
-  risk: "text-destructive",
-  insight: "text-gold",
-  forecast: "text-info",
-};
-
-type ChatMessage = { role: "user" | "assistant"; content: string };
-
-const chatMessages: ChatMessage[] = [
-  { role: "assistant", content: "Olá! Sou o assistente de IA da ApexConsult. Posso analisar seus dados, gerar insights sobre clientes, e ajudar com estratégias. Como posso ajudar?" },
-];
+import { useAIChat } from "@/lib/ai/useAIChat";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AIInsights() {
-  const [messages, setMessages] = useState(chatMessages);
+  const { messages, isLoading, sendMessage } = useAIChat({ contextType: "global" });
   const [input, setInput] = useState("");
+  const [kpis, setKpis] = useState("");
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchContext = async () => {
+      const [cRes, pRes, oRes] = await Promise.all([
+        supabase.from("client_accounts").select("id", { count: "exact", head: true }),
+        supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("opportunities").select("expected_value, stage"),
+      ]);
+      const pipeline = (oRes.data || []).filter(o => !["won", "lost"].includes(o.stage)).reduce((s, o) => s + Number(o.expected_value || 0), 0);
+      setKpis(`Clientes: ${cRes.count}, Projetos ativos: ${pRes.count}, Pipeline: R$ ${pipeline.toLocaleString("pt-BR")}`);
+    };
+    fetchContext();
+  }, []);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [messages]);
 
   const handleSend = () => {
     if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { role: "user" as const, content: input },
-      {
-        role: "assistant" as const,
-        content: "Baseado na análise dos dados atuais, posso identificar que o setor financeiro representa 35% da sua receita total. Recomendo diversificar a carteira focando em tecnologia e saúde, que apresentam crescimento acelerado de 22% ao ano.",
-      },
-    ]);
+    sendMessage(input, `Dados da consultoria: ${kpis}`);
     setInput("");
   };
+
+  const quickPrompts = [
+    { icon: TrendingUp, label: "Oportunidades de Upsell", prompt: "Analise os clientes e sugira oportunidades de upsell e cross-sell.", color: "text-success" },
+    { icon: AlertTriangle, label: "Riscos de Churn", prompt: "Identifique clientes com risco de churn baseado nos dados disponíveis.", color: "text-destructive" },
+    { icon: Lightbulb, label: "Benchmark", prompt: "Faça uma análise comparativa dos KPIs com benchmarks do setor de consultoria.", color: "text-gold" },
+    { icon: BarChart3, label: "Previsão de Receita", prompt: "Projete a receita para o próximo trimestre baseado na pipeline atual.", color: "text-info" },
+  ];
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
@@ -76,30 +50,28 @@ export default function AIInsights() {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-          <span className="text-sm text-muted-foreground">IA ativa</span>
+          <span className="text-sm text-muted-foreground">IA ativa — Lovable AI</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Insights Cards */}
+        {/* Quick Prompts */}
         <div className="space-y-4">
           <h3 className="text-lg font-heading font-semibold text-foreground flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-gold" /> Insights Automáticos
+            <Sparkles className="w-5 h-5 text-gold" /> Análises Rápidas
           </h3>
-          {insights.map((insight, i) => (
-            <div
-              key={i}
-              className={`rounded-xl p-5 border transition-all duration-200 hover:shadow-gold cursor-pointer animate-slide-up ${typeColors[insight.type]}`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
+          {quickPrompts.map((qp, i) => (
+            <button key={i} onClick={() => { sendMessage(qp.prompt, `Dados: ${kpis}`); }}
+              className="w-full rounded-xl p-5 border border-border bg-card hover:border-gold-subtle hover:shadow-gold transition-all duration-200 text-left animate-slide-up"
+              style={{ animationDelay: `${i * 0.1}s` }}>
               <div className="flex items-start gap-3">
-                <insight.icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${typeIconColors[insight.type]}`} />
+                <qp.icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${qp.color}`} />
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-1">{insight.title}</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{insight.description}</p>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">{qp.label}</h4>
+                  <p className="text-xs text-muted-foreground">{qp.prompt}</p>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -113,18 +85,19 @@ export default function AIInsights() {
               <h3 className="text-sm font-semibold text-foreground">Assistente IA</h3>
               <p className="text-xs text-muted-foreground">Pergunte sobre clientes, projetos e estratégia</p>
             </div>
+            {isLoading && <div className="w-2 h-2 rounded-full bg-gold animate-pulse ml-auto" />}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div ref={chatRef} className="flex-1 overflow-y-auto p-5 space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center py-12 space-y-3">
+                <Brain className="w-10 h-10 text-muted-foreground mx-auto" />
+                <p className="text-sm text-muted-foreground">Faça uma pergunta ou escolha uma análise rápida</p>
+              </div>
+            )}
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-gradient-gold text-primary-foreground"
-                      : "bg-secondary text-foreground"
-                  }`}
-                >
+                <div className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user" ? "bg-gradient-gold text-primary-foreground" : "bg-secondary text-foreground"}`}>
                   {msg.content}
                 </div>
               </div>
@@ -133,16 +106,8 @@ export default function AIInsights() {
 
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
-              <Input
-                placeholder="Pergunte algo à IA..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="bg-secondary border-border"
-              />
-              <Button variant="gold" size="icon" onClick={handleSend}>
-                <Send className="w-4 h-4" />
-              </Button>
+              <Input placeholder="Pergunte algo à IA..." value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSend()} className="bg-secondary border-border" />
+              <Button variant="gold" size="icon" onClick={handleSend} disabled={isLoading}><Send className="w-4 h-4" /></Button>
             </div>
           </div>
         </div>
