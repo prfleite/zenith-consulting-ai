@@ -44,8 +44,10 @@ const typeIconColors = {
   forecast: "text-info",
 };
 
-const chatMessages = [
-  { role: "assistant" as const, content: "Olá! Sou o assistente de IA da ApexConsult. Posso analisar seus dados, gerar insights sobre clientes, e ajudar com estratégias. Como posso ajudar?" },
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+const chatMessages: ChatMessage[] = [
+  { role: "assistant", content: "Olá! Sou o assistente de IA da ApexConsult. Posso analisar seus dados, gerar insights sobre clientes, e ajudar com estratégias. Como posso ajudar?" },
 ];
 
 export default function AIInsights() {
