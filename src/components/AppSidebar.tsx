@@ -9,6 +9,7 @@ const staffNavItems = [
   { icon: Users, label: "Clientes", path: "/clients" },
   { icon: Target, label: "Oportunidades", path: "/opportunities" },
   { icon: FolderKanban, label: "Projetos", path: "/projects" },
+  { icon: Megaphone, label: "Marketing", path: "/marketing" },
   { icon: Clock, label: "Timesheets", path: "/timesheets" },
   { icon: Receipt, label: "Despesas", path: "/expenses" },
   { icon: DollarSign, label: "Faturamento", path: "/billing" },
