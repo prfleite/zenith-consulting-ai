@@ -1,92 +1,101 @@
-import { TrendingUp, Users, FolderKanban, DollarSign, ArrowUpRight, ArrowDownRight, Clock, Star } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { TrendingUp, Users, FolderKanban, DollarSign, ArrowUpRight, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-
-const revenueData = [
-  { month: "Jan", value: 42000 },
-  { month: "Fev", value: 48000 },
-  { month: "Mar", value: 55000 },
-  { month: "Abr", value: 51000 },
-  { month: "Mai", value: 62000 },
-  { month: "Jun", value: 71000 },
-  { month: "Jul", value: 68000 },
-  { month: "Ago", value: 79000 },
-];
-
-const projectsData = [
-  { month: "Jan", completed: 5, active: 8 },
-  { month: "Fev", completed: 7, active: 10 },
-  { month: "Mar", completed: 6, active: 12 },
-  { month: "Abr", completed: 9, active: 11 },
-  { month: "Mai", completed: 8, active: 14 },
-  { month: "Jun", completed: 11, active: 13 },
-];
-
-const recentActivities = [
-  { client: "TechCorp Brasil", action: "Novo diagnóstico iniciado", time: "2h atrás", type: "new" },
-  { client: "Indústria Global", action: "Relatório final entregue", time: "4h atrás", type: "completed" },
-  { client: "Banco Nova Era", action: "Reunião de alinhamento", time: "6h atrás", type: "meeting" },
-  { client: "Varejo Express", action: "Proposta aprovada", time: "1d atrás", type: "approved" },
-  { client: "Saúde Prime", action: "Sprint 3 finalizado", time: "1d atrás", type: "completed" },
-];
-
-const metrics = [
-  { label: "Receita Mensal", value: "R$ 79.000", change: "+14.2%", up: true, icon: DollarSign },
-  { label: "Clientes Ativos", value: "47", change: "+5", up: true, icon: Users },
-  { label: "Projetos em Andamento", value: "23", change: "+3", up: true, icon: FolderKanban },
-  { label: "Taxa de Retenção", value: "94.8%", change: "+2.1%", up: true, icon: TrendingUp },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
+  const { profile } = useAuth();
+  const [clientCount, setClientCount] = useState(0);
+  const [activeProjects, setActiveProjects] = useState(0);
+  const [pipelineValue, setPipelineValue] = useState(0);
+  const [weekHours, setWeekHours] = useState(0);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [topProjects, setTopProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      const [cRes, pRes, oRes, iRes, aRes, tpRes] = await Promise.all([
+        supabase.from("client_accounts").select("id", { count: "exact", head: true }),
+        supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("opportunities").select("expected_value").in("stage", ["lead", "qualified", "proposal", "negotiation"]),
+        supabase.from("invoices").select("amount, status, issue_date").order("issue_date", { ascending: false }),
+        supabase.from("activity_log").select("action, entity_type, created_at, details_json").order("created_at", { ascending: false }).limit(5),
+        supabase.from("projects").select("id, name, status, client_accounts(name)").eq("status", "active").limit(3),
+      ]);
+      setClientCount(cRes.count || 0);
+      setActiveProjects(pRes.count || 0);
+      setPipelineValue((oRes.data || []).reduce((s, o) => s + Number(o.expected_value || 0), 0));
+      setInvoices(iRes.data || []);
+      setActivities(aRes.data || []);
+      setTopProjects(tpRes.data || []);
+
+      // Week hours
+      const today = new Date();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - today.getDay() + 1);
+      const { data: te } = await supabase.from("time_entries").select("hours").gte("date", monday.toISOString().split("T")[0]);
+      setWeekHours((te || []).reduce((s, e) => s + Number(e.hours), 0));
+    };
+    fetchAll();
+  }, []);
+
+  const totalReceived = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
+
+  const revenueChart = useMemo(() => {
+    const months: Record<string, { month: string; value: number }> = {};
+    invoices.forEach((inv) => {
+      if (inv.status !== "paid") return;
+      const m = inv.issue_date?.slice(0, 7);
+      if (!m) return;
+      if (!months[m]) months[m] = { month: m, value: 0 };
+      months[m].value += Number(inv.amount);
+    });
+    return Object.values(months).sort((a, b) => a.month.localeCompare(b.month)).slice(-8);
+  }, [invoices]);
+
+  const metrics = [
+    { label: "Receita Recebida", value: `R$ ${(totalReceived / 1000).toFixed(0)}k`, icon: DollarSign },
+    { label: "Clientes Ativos", value: String(clientCount), icon: Users },
+    { label: "Projetos Ativos", value: String(activeProjects), icon: FolderKanban },
+    { label: "Pipeline", value: `R$ ${(pipelineValue / 1000).toFixed(0)}k`, icon: TrendingUp },
+  ];
+
   return (
     <div className="p-8 space-y-8 animate-fade-in">
-      {/* Header */}
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-heading font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Visão geral da sua consultoria</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          Atualizado agora
+          <Clock className="w-4 h-4" /> {weekHours}h esta semana
         </div>
       </div>
 
-      {/* Metrics Grid */}
+      {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {metrics.map((metric) => (
-          <div
-            key={metric.label}
-            className="bg-card rounded-xl p-5 border border-border hover:border-gold-subtle transition-all duration-300 shadow-card group"
-          >
+        {metrics.map((m) => (
+          <div key={m.label} className="bg-card rounded-xl p-5 border border-border hover:border-gold-subtle transition-all duration-300 shadow-card group">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">{metric.label}</span>
+              <span className="text-sm text-muted-foreground">{m.label}</span>
               <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center group-hover:bg-gold/10 transition-colors">
-                <metric.icon className="w-4 h-4 text-muted-foreground group-hover:text-gold transition-colors" />
+                <m.icon className="w-4 h-4 text-muted-foreground group-hover:text-gold transition-colors" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground font-body">{metric.value}</div>
-            <div className="flex items-center gap-1 mt-2">
-              {metric.up ? (
-                <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-              ) : (
-                <ArrowDownRight className="w-3.5 h-3.5 text-destructive" />
-              )}
-              <span className={metric.up ? "text-xs text-success" : "text-xs text-destructive"}>
-                {metric.change}
-              </span>
-              <span className="text-xs text-muted-foreground ml-1">vs mês anterior</span>
-            </div>
+            <div className="text-2xl font-bold text-foreground">{m.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-card rounded-xl p-6 border border-border shadow-card">
           <h3 className="text-lg font-heading font-semibold text-foreground mb-4">Receita Mensal</h3>
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={revenueData}>
+            <AreaChart data={revenueChart}>
               <defs>
                 <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(43, 74%, 55%)" stopOpacity={0.3} />
@@ -96,58 +105,46 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 18%)" />
               <XAxis dataKey="month" stroke="hsl(220, 10%, 50%)" fontSize={12} />
               <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(220, 18%, 12%)",
-                  border: "1px solid hsl(220, 14%, 18%)",
-                  borderRadius: "8px",
-                  color: "hsl(40, 10%, 92%)",
-                }}
-              />
+              <Tooltip contentStyle={{ background: "hsl(220, 18%, 12%)", border: "1px solid hsl(220, 14%, 18%)", borderRadius: "8px", color: "hsl(40, 10%, 92%)" }} />
               <Area type="monotone" dataKey="value" stroke="hsl(43, 74%, 55%)" fill="url(#goldGradient)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Recent Activity */}
         <div className="bg-card rounded-xl p-6 border border-border shadow-card">
           <h3 className="text-lg font-heading font-semibold text-foreground mb-4">Atividade Recente</h3>
           <div className="space-y-4">
-            {recentActivities.map((activity, i) => (
+            {activities.length > 0 ? activities.map((a, i) => (
               <div key={i} className="flex items-start gap-3 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="w-2 h-2 rounded-full bg-gold mt-2 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm text-foreground font-medium truncate">{activity.client}</p>
-                  <p className="text-xs text-muted-foreground">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-0.5">{activity.time}</p>
+                  <p className="text-sm text-foreground font-medium truncate">{a.action}</p>
+                  <p className="text-xs text-muted-foreground">{a.entity_type}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-0.5">{new Date(a.created_at).toLocaleDateString("pt-BR")}</p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="text-sm text-muted-foreground">Nenhuma atividade recente.</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Projects Chart */}
-      <div className="bg-card rounded-xl p-6 border border-border shadow-card">
-        <h3 className="text-lg font-heading font-semibold text-foreground mb-4">Projetos por Mês</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={projectsData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 18%)" />
-            <XAxis dataKey="month" stroke="hsl(220, 10%, 50%)" fontSize={12} />
-            <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                background: "hsl(220, 18%, 12%)",
-                border: "1px solid hsl(220, 14%, 18%)",
-                borderRadius: "8px",
-                color: "hsl(40, 10%, 92%)",
-              }}
-            />
-            <Bar dataKey="completed" fill="hsl(43, 74%, 55%)" radius={[4, 4, 0, 0]} name="Concluídos" />
-            <Bar dataKey="active" fill="hsl(220, 14%, 25%)" radius={[4, 4, 0, 0]} name="Ativos" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {/* Top Projects */}
+      {topProjects.length > 0 && (
+        <div className="bg-card rounded-xl p-6 border border-border shadow-card">
+          <h3 className="text-lg font-heading font-semibold text-foreground mb-4">Projetos em Destaque</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {topProjects.map((p: any) => (
+              <Link key={p.id} to={`/projects/${p.id}`} className="bg-secondary rounded-lg p-4 hover:bg-secondary/80 transition-colors">
+                <p className="text-sm font-medium text-foreground">{p.name}</p>
+                <p className="text-xs text-muted-foreground">{p.client_accounts?.name}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-success/20 text-success mt-2 inline-block capitalize">{p.status}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
