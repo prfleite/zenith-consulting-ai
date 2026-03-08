@@ -15,6 +15,7 @@ const staffNavItems = [
   { icon: DollarSign, label: "Faturamento", path: "/billing" },
   { icon: UserCheck, label: "Recursos", path: "/resources" },
   { icon: BookOpen, label: "Conhecimento", path: "/knowledge" },
+  { icon: FileText, label: "Relatórios", path: "/reports" },
   { icon: Brain, label: "IA Insights", path: "/ai-insights" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: CreditCard, label: "Planos", path: "/subscription" },
