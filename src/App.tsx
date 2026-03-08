@@ -22,6 +22,7 @@ import Portal from "./pages/Portal";
 import Analytics from "./pages/Analytics";
 import Resources from "./pages/Resources";
 import Subscription from "./pages/Subscription";
+import Marketing from "./pages/Marketing";
 import Reports from "./pages/Reports";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="/opportunities/:id" element={<OpportunityDetail />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
+        <Route path="/marketing" element={<Marketing />} />
         <Route path="/timesheets" element={<Timesheets />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/billing" element={<Billing />} />
