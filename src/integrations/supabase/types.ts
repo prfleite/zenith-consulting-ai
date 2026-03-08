@@ -745,6 +745,60 @@ export type Database = {
           },
         ]
       }
+      knowledge_base: {
+        Row: {
+          category: string
+          company_id: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          metadata: Json | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          company_id: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_base_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_base_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           ai_generated: boolean | null
@@ -1059,6 +1113,140 @@ export type Database = {
           },
         ]
       }
+      portal_approvals: {
+        Row: {
+          approved_at: string | null
+          client_account_id: string | null
+          comment: string | null
+          company_id: string
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          client_account_id?: string | null
+          comment?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type?: string
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          client_account_id?: string | null
+          comment?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_approvals_client_account_id_fkey"
+            columns: ["client_account_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_approvals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_comments: {
+        Row: {
+          author_name: string
+          client_account_id: string | null
+          comment: string
+          company_id: string
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+        }
+        Insert: {
+          author_name: string
+          client_account_id?: string | null
+          comment: string
+          company_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+        }
+        Update: {
+          author_name?: string
+          client_account_id?: string | null
+          comment?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_comments_client_account_id_fkey"
+            columns: ["client_account_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_comments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_shared_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          permissions: string
+          portal_access_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type?: string
+          permissions?: string
+          portal_access_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          permissions?: string
+          portal_access_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_shared_items_portal_access_id_fkey"
+            columns: ["portal_access_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
@@ -1306,6 +1494,79 @@ export type Database = {
             columns: ["project_manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          ai_generated: boolean | null
+          client_id: string | null
+          company_id: string
+          content_html: string | null
+          created_at: string
+          id: string
+          period_end: string | null
+          period_start: string | null
+          project_id: string | null
+          report_type: string
+          sent_at: string | null
+          status: string
+          title: string
+          viewed_at: string | null
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          client_id?: string | null
+          company_id: string
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          project_id?: string | null
+          report_type?: string
+          sent_at?: string | null
+          status?: string
+          title: string
+          viewed_at?: string | null
+        }
+        Update: {
+          ai_generated?: boolean | null
+          client_id?: string | null
+          company_id?: string
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          project_id?: string | null
+          report_type?: string
+          sent_at?: string | null
+          status?: string
+          title?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
