@@ -458,7 +458,7 @@ function CampaignsTab({ companyId }: { companyId: string }) {
 
   const createCampaign = async () => {
     if (!newCampaign.name || !newCampaign.client_id) return;
-    await supabase.from("marketing_campaigns").insert({
+    await (supabase.from("marketing_campaigns") as any).insert({
       name: newCampaign.name,
       type: newCampaign.type,
       client_id: newCampaign.client_id,
