@@ -71,7 +71,11 @@ serve(async (req) => {
       { company_id: companyId, name: "Energia Sustentável", segment: "Enterprise", industry: "Energia", size: "Grande", country: "Brasil", website: "https://energiasust.com", annual_revenue: 80000000, owner_id: adminId, health_score: 45 },
     ];
 
-    const { data: clients } = await supabase.from("client_accounts").insert(clientsData).select();
+    const { data: clients, error: clientsError } = await supabase.from("client_accounts").insert(clientsData).select();
+    if (clientsError) {
+      console.error("Clients insert error:", clientsError);
+      throw new Error(`Clients insert failed: ${clientsError.message}`);
+    }
     const clientIds = clients!.map((c: any) => c.id);
 
     // 4. Client Contacts (2 per client)
