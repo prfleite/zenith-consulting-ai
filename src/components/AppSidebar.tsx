@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Target, FolderKanban, Clock, Receipt, BookOpen, Settings, ChevronLeft, ChevronRight, Sparkles, LogOut, Globe } from "lucide-react";
+import { LayoutDashboard, Users, Target, FolderKanban, Clock, Receipt, BookOpen, Settings, ChevronLeft, ChevronRight, Sparkles, LogOut, Globe, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -11,6 +11,7 @@ const staffNavItems = [
   { icon: FolderKanban, label: "Projetos", path: "/projects" },
   { icon: Clock, label: "Timesheets", path: "/timesheets" },
   { icon: Receipt, label: "Despesas", path: "/expenses" },
+  { icon: DollarSign, label: "Faturamento", path: "/billing" },
   { icon: BookOpen, label: "Conhecimento", path: "/knowledge" },
   { icon: Settings, label: "Configurações", path: "/settings" },
 ];
