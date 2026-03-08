@@ -297,7 +297,7 @@ function FlowBuilderTab({ companyId }: { companyId: string }) {
       return;
     }
     try {
-      await supabase.from("marketing_flows").insert({
+      await (supabase.from("marketing_flows") as any).insert({
         client_id: selectedClient,
         company_id: companyId,
         name: flowName,
