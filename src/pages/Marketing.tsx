@@ -627,7 +627,7 @@ function InboxTab({ companyId }: { companyId: string }) {
   const { data: messages } = useQuery({
     queryKey: ["unified-inbox", platformFilter],
     queryFn: async () => {
-      let q = supabase.from("unified_inbox").select("*, client:client_accounts(name)").order("created_at", { ascending: false });
+      let q = (supabase.from("unified_inbox") as any).select("*, client:client_accounts(name)").order("created_at", { ascending: false });
       if (platformFilter !== "all") q = q.eq("platform", platformFilter);
       const { data } = await q;
       return data || [];
