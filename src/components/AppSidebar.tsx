@@ -11,6 +11,7 @@ const staffNavItems = [
   { icon: FolderKanban, label: "Projetos", path: "/projects" },
   { icon: Clock, label: "Timesheets", path: "/timesheets" },
   { icon: Receipt, label: "Despesas", path: "/expenses" },
+  { icon: DollarSign, label: "Faturamento", path: "/billing" },
   { icon: BookOpen, label: "Conhecimento", path: "/knowledge" },
   { icon: Settings, label: "Configurações", path: "/settings" },
 ];
