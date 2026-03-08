@@ -667,7 +667,7 @@ function InboxTab({ companyId }: { companyId: string }) {
   };
 
   const markAsRead = async (id: string) => {
-    await supabase.from("unified_inbox").update({ read: true }).eq("id", id);
+    await (supabase.from("unified_inbox") as any).update({ read: true }).eq("id", id);
   };
 
   const getPlatformIcon = (platform: string) => {
