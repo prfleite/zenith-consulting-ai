@@ -256,7 +256,7 @@ function FlowBuilderTab({ companyId }: { companyId: string }) {
   const { data: flows } = useQuery({
     queryKey: ["marketing-flows"],
     queryFn: async () => {
-      const { data } = await supabase.from("marketing_flows").select("*").order("created_at", { ascending: false });
+      const { data } = await (supabase.from("marketing_flows") as any).select("*").order("created_at", { ascending: false });
       return data || [];
     },
   });
