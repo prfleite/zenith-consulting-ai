@@ -22,6 +22,7 @@ import Portal from "./pages/Portal";
 import Analytics from "./pages/Analytics";
 import Resources from "./pages/Resources";
 import Subscription from "./pages/Subscription";
+import Marketing from "./pages/Marketing";
 import Reports from "./pages/Reports";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
