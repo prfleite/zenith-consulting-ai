@@ -103,6 +103,59 @@ export type Database = {
           },
         ]
       }
+      ai_alerts: {
+        Row: {
+          alert_type: string
+          auto_generated: boolean
+          company_id: string
+          created_at: string
+          data: Json | null
+          description: string
+          id: string
+          is_read: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          alert_type?: string
+          auto_generated?: boolean
+          company_id: string
+          created_at?: string
+          data?: Json | null
+          description?: string
+          id?: string
+          is_read?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          auto_generated?: boolean
+          company_id?: string
+          created_at?: string
+          data?: Json | null
+          description?: string
+          id?: string
+          is_read?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_messages: {
         Row: {
           ai_thread_id: string
