@@ -43,7 +43,7 @@ export default function Opportunities() {
 
   const handleDrop = async (oppId: string, newStage: string) => {
     setOpps(prev => prev.map(o => o.id === oppId ? { ...o, stage: newStage } : o));
-    await supabase.from("opportunities").update({ stage: newStage }).eq("id", oppId);
+    await supabase.from("opportunities").update({ stage: newStage as any }).eq("id", oppId);
   };
 
   const formatValue = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}K` : `R$ ${v}`;
