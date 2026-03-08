@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Target, FolderKanban, Clock, Receipt, BookOpen, Settings, ChevronLeft, ChevronRight, Sparkles, LogOut, Globe } from "lucide-react";
+import { LayoutDashboard, Users, Target, FolderKanban, Clock, Receipt, BookOpen, Settings, ChevronLeft, ChevronRight, Sparkles, LogOut, Globe, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 

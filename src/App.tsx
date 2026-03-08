@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
@@ -13,6 +12,10 @@ import ClientDetail from "./pages/ClientDetail";
 import Opportunities from "./pages/Opportunities";
 import OpportunityDetail from "./pages/OpportunityDetail";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
+import Timesheets from "./pages/Timesheets";
+import Expenses from "./pages/Expenses";
+import Billing from "./pages/Billing";
 import AIInsights from "./pages/AIInsights";
 import Reports from "./pages/Reports";
 import SettingsPage from "./pages/Settings";
@@ -49,8 +52,10 @@ function AppRoutes() {
         <Route path="/opportunities" element={<Opportunities />} />
         <Route path="/opportunities/:id" element={<OpportunityDetail />} />
         <Route path="/projects" element={<Projects />} />
-        <Route path="/timesheets" element={<Reports />} />
-        <Route path="/expenses" element={<Reports />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
+        <Route path="/timesheets" element={<Timesheets />} />
+        <Route path="/expenses" element={<Expenses />} />
+        <Route path="/billing" element={<Billing />} />
         <Route path="/knowledge" element={<AIInsights />} />
         <Route path="/ai-insights" element={<AIInsights />} />
         <Route path="/reports" element={<Reports />} />
