@@ -329,6 +329,9 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Project Health - At Risk */}
+      <ProjectHealthWidget />
+
       {/* Top Projects */}
       {topProjects.length > 0 && (
         <div className="bg-card rounded-xl p-6 border border-border shadow-card">
