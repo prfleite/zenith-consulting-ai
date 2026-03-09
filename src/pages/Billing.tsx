@@ -42,6 +42,7 @@ const Billing = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { displayCurrency, setDisplayCurrency, convertAndFormat } = useCurrency("BRL");
 
   const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const handleBulkPaid = async () => {
