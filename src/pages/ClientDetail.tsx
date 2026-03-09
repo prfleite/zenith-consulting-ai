@@ -3,6 +3,10 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Building2, Mail, Phone, Star, Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,27 +19,83 @@ export default function ClientDetail() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Contact form
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [editingContact, setEditingContact] = useState<any>(null);
+  const [contactForm, setContactForm] = useState({ name: "", role_title: "", email: "", phone: "", is_primary: false });
+  const [savingContact, setSavingContact] = useState(false);
+
+  const loadData = async () => {
     if (!id) return;
-    const load = async () => {
-      const [clientRes, contactsRes, oppsRes, projRes, docsRes, npsRes] = await Promise.all([
-        supabase.from("client_accounts").select("*, owner:profiles!client_accounts_owner_id_fkey(name)").eq("id", id).single(),
-        supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false }),
-        supabase.from("opportunities").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
-        supabase.from("projects").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
-        supabase.from("documents").select("*").eq("related_client_account_id", id).order("created_at", { ascending: false }),
-        supabase.from("nps_surveys").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
-      ]);
-      if (clientRes.data) setClient(clientRes.data);
-      if (contactsRes.data) setContacts(contactsRes.data);
-      if (oppsRes.data) setOpportunities(oppsRes.data);
-      if (projRes.data) setProjects(projRes.data);
-      if (docsRes.data) setDocuments(docsRes.data);
-      if (npsRes.data) setNps(npsRes.data);
-      setLoading(false);
-    };
-    load();
-  }, [id]);
+    const [clientRes, contactsRes, oppsRes, projRes, docsRes, npsRes] = await Promise.all([
+      supabase.from("client_accounts").select("*, owner:profiles!client_accounts_owner_id_fkey(name)").eq("id", id).single(),
+      supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false }),
+      supabase.from("opportunities").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
+      supabase.from("projects").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
+      supabase.from("documents").select("*").eq("related_client_account_id", id).order("created_at", { ascending: false }),
+      supabase.from("nps_surveys").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
+    ]);
+    if (clientRes.data) setClient(clientRes.data);
+    if (contactsRes.data) setContacts(contactsRes.data);
+    if (oppsRes.data) setOpportunities(oppsRes.data);
+    if (projRes.data) setProjects(projRes.data);
+    if (docsRes.data) setDocuments(docsRes.data);
+    if (npsRes.data) setNps(npsRes.data);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, [id]);
+
+  const openCreateContact = () => {
+    setEditingContact(null);
+    setContactForm({ name: "", role_title: "", email: "", phone: "", is_primary: false });
+    setShowContactForm(true);
+  };
+
+  const openEditContact = (c: any) => {
+    setEditingContact(c);
+    setContactForm({ name: c.name, role_title: c.role_title || "", email: c.email || "", phone: c.phone || "", is_primary: c.is_primary });
+    setShowContactForm(true);
+  };
+
+  const handleSaveContact = async () => {
+    if (!contactForm.name || !id) return;
+    setSavingContact(true);
+    if (editingContact) {
+      const { error } = await supabase.from("client_contacts").update({
+        name: contactForm.name,
+        role_title: contactForm.role_title || null,
+        email: contactForm.email || null,
+        phone: contactForm.phone || null,
+        is_primary: contactForm.is_primary,
+      }).eq("id", editingContact.id);
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); }
+      else { toast({ title: "Contato atualizado!" }); }
+    } else {
+      const { error } = await supabase.from("client_contacts").insert({
+        client_account_id: id,
+        name: contactForm.name,
+        role_title: contactForm.role_title || null,
+        email: contactForm.email || null,
+        phone: contactForm.phone || null,
+        is_primary: contactForm.is_primary,
+      });
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); }
+      else { toast({ title: "Contato criado!" }); }
+    }
+    setSavingContact(false);
+    setShowContactForm(false);
+    // Reload contacts
+    const { data } = await supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false });
+    if (data) setContacts(data);
+  };
+
+  const handleDeleteContact = async (contactId: string) => {
+    const { error } = await supabase.from("client_contacts").delete().eq("id", contactId);
+    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Contato excluído" });
+    setContacts(prev => prev.filter(c => c.id !== contactId));
+  };
 
   if (loading) return <div className="flex justify-center items-center h-96"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>;
   if (!client) return <div className="p-8 text-muted-foreground">Cliente não encontrado</div>;
@@ -77,9 +137,9 @@ export default function ClientDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
+      <div className="flex gap-1 border-b border-border overflow-x-auto">
         {tabs.map((tab) => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] ${activeTab === tab.key ? "border-gold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${activeTab === tab.key ? "border-gold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             {tab.label}
           </button>
         ))}
@@ -126,6 +186,9 @@ export default function ClientDetail() {
 
       {activeTab === "contacts" && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <Button variant="gold" size="sm" onClick={openCreateContact}><Plus className="w-4 h-4 mr-1" />Novo Contato</Button>
+          </div>
           {contacts.map((c) => (
             <div key={c.id} className="bg-card rounded-xl p-5 border border-border flex items-center justify-between">
               <div>
@@ -140,11 +203,12 @@ export default function ClientDetail() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="w-8 h-8"><Edit2 className="w-3.5 h-3.5" /></Button>
-                <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => openEditContact(c)}><Edit2 className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive" onClick={() => handleDeleteContact(c.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
               </div>
             </div>
           ))}
+          {contacts.length === 0 && <p className="text-center py-8 text-muted-foreground">Nenhum contato cadastrado</p>}
         </div>
       )}
 
@@ -211,6 +275,29 @@ export default function ClientDetail() {
           ))}
         </div>
       )}
+
+      {/* Contact Create/Edit Dialog */}
+      <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{editingContact ? "Editar Contato" : "Novo Contato"}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div><Label>Nome *</Label><Input value={contactForm.name} onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))} className="bg-secondary border-border" /></div>
+            <div><Label>Cargo</Label><Input value={contactForm.role_title} onChange={e => setContactForm(f => ({ ...f, role_title: e.target.value }))} className="bg-secondary border-border" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Email</Label><Input type="email" value={contactForm.email} onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))} className="bg-secondary border-border" /></div>
+              <div><Label>Telefone</Label><Input value={contactForm.phone} onChange={e => setContactForm(f => ({ ...f, phone: e.target.value }))} className="bg-secondary border-border" /></div>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+              <input type="checkbox" checked={contactForm.is_primary} onChange={e => setContactForm(f => ({ ...f, is_primary: e.target.checked }))} className="rounded" />
+              Contato principal
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowContactForm(false)}>Cancelar</Button>
+            <Button variant="gold" onClick={handleSaveContact} disabled={savingContact || !contactForm.name}>{savingContact ? "Salvando..." : editingContact ? "Salvar" : "Criar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

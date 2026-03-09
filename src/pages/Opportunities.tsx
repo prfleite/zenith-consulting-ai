@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Target, List, LayoutGrid, GripVertical } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Plus, Target, List, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 type Opportunity = {
   id: string;
@@ -25,21 +31,51 @@ const stages = [
 ];
 
 export default function Opportunities() {
+  const { profile } = useAuth();
   const [opps, setOpps] = useState<Opportunity[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [showCreate, setShowCreate] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ title: "", client_account_id: "", expected_value: "", probability: "10", stage: "lead", close_date: "", description: "" });
 
-  useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("opportunities")
-        .select("*, client_account:client_accounts(name), owner:profiles!opportunities_owner_id_fkey(name)")
-        .order("created_at", { ascending: false });
-      if (data) setOpps(data as any);
-      setLoading(false);
-    };
-    fetch();
-  }, []);
+  const fetchData = async () => {
+    const [{ data: oppsData }, { data: clientsData }] = await Promise.all([
+      supabase.from("opportunities").select("*, client_account:client_accounts(name), owner:profiles!opportunities_owner_id_fkey(name)").order("created_at", { ascending: false }),
+      supabase.from("client_accounts").select("id, name").order("name"),
+    ]);
+    if (oppsData) setOpps(oppsData as any);
+    if (clientsData) setClients(clientsData);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleCreate = async () => {
+    if (!form.title || !form.client_account_id || !profile?.company_id) return;
+    setSaving(true);
+    const { error } = await supabase.from("opportunities").insert({
+      company_id: profile.company_id,
+      title: form.title,
+      client_account_id: form.client_account_id,
+      expected_value: form.expected_value ? Number(form.expected_value) : 0,
+      probability: Number(form.probability) || 10,
+      stage: form.stage as any,
+      close_date: form.close_date || null,
+      description: form.description || null,
+      owner_id: profile.id,
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: "Erro ao criar oportunidade", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Oportunidade criada!" });
+    setShowCreate(false);
+    setForm({ title: "", client_account_id: "", expected_value: "", probability: "10", stage: "lead", close_date: "", description: "" });
+    fetchData();
+  };
 
   const handleDrop = async (oppId: string, newStage: string) => {
     setOpps(prev => prev.map(o => o.id === oppId ? { ...o, stage: newStage } : o));
@@ -70,7 +106,7 @@ export default function Opportunities() {
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Oportunidade</Button>
+          <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Nova Oportunidade</Button>
         </div>
       </div>
 
@@ -136,6 +172,57 @@ export default function Opportunities() {
           ))}
         </div>
       )}
+
+      {/* Create Opportunity Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Nova Oportunidade</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Título *</Label>
+              <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Consultoria estratégica" className="bg-secondary border-border" />
+            </div>
+            <div>
+              <Label>Cliente *</Label>
+              <Select value={form.client_account_id} onValueChange={v => setForm(f => ({ ...f, client_account_id: v }))}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Valor Esperado (R$)</Label>
+                <Input type="number" value={form.expected_value} onChange={e => setForm(f => ({ ...f, expected_value: e.target.value }))} placeholder="0" className="bg-secondary border-border" />
+              </div>
+              <div>
+                <Label>Probabilidade (%)</Label>
+                <Input type="number" value={form.probability} onChange={e => setForm(f => ({ ...f, probability: e.target.value }))} min="0" max="100" className="bg-secondary border-border" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Estágio</Label>
+                <Select value={form.stage} onValueChange={v => setForm(f => ({ ...f, stage: v }))}>
+                  <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectContent>{stages.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Data de Fechamento</Label>
+                <Input type="date" value={form.close_date} onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))} className="bg-secondary border-border" />
+              </div>
+            </div>
+            <div>
+              <Label>Descrição</Label>
+              <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Opcional" className="bg-secondary border-border" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button variant="gold" onClick={handleCreate} disabled={saving || !form.title || !form.client_account_id}>{saving ? "Salvando..." : "Criar Oportunidade"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
