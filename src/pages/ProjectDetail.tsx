@@ -13,6 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { usePresence } from "@/hooks/usePresence";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { Tables } from "@/integrations/supabase/types";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
