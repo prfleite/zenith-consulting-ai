@@ -91,6 +91,37 @@ export default function Opportunities() {
 
   if (loading) return <div className="flex justify-center items-center h-96"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>;
 
+  if (!loading && opps.length === 0) return (
+    <div className="p-8 space-y-6 animate-fade-in">
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-heading font-bold text-foreground">Oportunidades</h1>
+          <p className="text-muted-foreground mt-1">Pipeline de vendas</p>
+        </div>
+        <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Nova Oportunidade</Button>
+      </div>
+      <EmptyState {...emptyStates.opportunities} actionLabel="Nova Oportunidade" onAction={() => setShowCreate(true)} />
+      {/* Create Opportunity Dialog - duplicated for empty state */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Nova Oportunidade</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div><Label>Título *</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Consultoria estratégica" className="bg-secondary border-border" /></div>
+            <div><Label>Cliente *</Label><Select value={form.client_account_id} onValueChange={v => setForm(f => ({ ...f, client_account_id: v }))}><SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Selecione o cliente" /></SelectTrigger><SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Valor Esperado (R$)</Label><Input type="number" value={form.expected_value} onChange={e => setForm(f => ({ ...f, expected_value: e.target.value }))} className="bg-secondary border-border" /></div>
+              <div><Label>Probabilidade (%)</Label><Input type="number" value={form.probability} onChange={e => setForm(f => ({ ...f, probability: e.target.value }))} className="bg-secondary border-border" /></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button variant="gold" onClick={handleCreate} disabled={saving || !form.title || !form.client_account_id}>{saving ? "Salvando..." : "Criar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+
   return (
     <div className="p-8 space-y-6 animate-fade-in">
       <div className="flex items-end justify-between">
