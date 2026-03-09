@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, Plus, Building2, TrendingUp, Star, MapPin, MoreHorizontal } from "lucide-react";
+import { Search, Plus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 type ClientAccount = {
   id: string;
@@ -18,23 +22,53 @@ type ClientAccount = {
   owner?: { name: string } | null;
 };
 
+const segments = ["Enterprise", "Mid-Market", "SMB", "Startup"];
+const industries = ["Tecnologia", "Saúde", "Financeiro", "Varejo", "Educação", "Manufatura", "Serviços", "Energia", "Agro", "Outro"];
+
 export default function Clients() {
+  const { profile } = useAuth();
   const [clients, setClients] = useState<ClientAccount[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", segment: "", industry: "", country: "Brasil", website: "", annual_revenue: "" });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      const { data, error } = await supabase
-        .from("client_accounts")
-        .select("*, owner:profiles!client_accounts_owner_id_fkey(name)")
-        .order("name");
-      if (data) setClients(data as any);
-      setLoading(false);
-    };
+  const fetchClients = async () => {
+    const { data } = await supabase
+      .from("client_accounts")
+      .select("*, owner:profiles!client_accounts_owner_id_fkey(name)")
+      .order("name");
+    if (data) setClients(data as any);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchClients(); }, []);
+
+  const handleCreate = async () => {
+    if (!form.name || !profile?.company_id) return;
+    setSaving(true);
+    const { error } = await supabase.from("client_accounts").insert({
+      company_id: profile.company_id,
+      name: form.name,
+      segment: form.segment || null,
+      industry: form.industry || null,
+      country: form.country || "Brasil",
+      website: form.website || null,
+      annual_revenue: form.annual_revenue ? Number(form.annual_revenue) : null,
+      owner_id: profile.id,
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: "Erro ao criar cliente", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Cliente criado com sucesso!" });
+    setShowCreate(false);
+    setForm({ name: "", segment: "", industry: "", country: "Brasil", website: "", annual_revenue: "" });
     fetchClients();
-  }, []);
+  };
 
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -63,7 +97,7 @@ export default function Clients() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Clientes</h1>
           <p className="text-muted-foreground mt-1">{clients.length} clientes registrados</p>
         </div>
-        <Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Novo Cliente</Button>
+        <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Novo Cliente</Button>
       </div>
 
       <div className="relative max-w-md">
@@ -111,6 +145,53 @@ export default function Clients() {
           {filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
         </div>
       )}
+
+      {/* Create Client Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Novo Cliente</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome *</Label>
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nome da empresa" className="bg-secondary border-border" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Segmento</Label>
+                <Select value={form.segment} onValueChange={v => setForm(f => ({ ...f, segment: v }))}>
+                  <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{segments.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Indústria</Label>
+                <Select value={form.industry} onValueChange={v => setForm(f => ({ ...f, industry: v }))}>
+                  <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{industries.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>País</Label>
+                <Input value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} className="bg-secondary border-border" />
+              </div>
+              <div>
+                <Label>Receita Anual (R$)</Label>
+                <Input type="number" value={form.annual_revenue} onChange={e => setForm(f => ({ ...f, annual_revenue: e.target.value }))} placeholder="0" className="bg-secondary border-border" />
+              </div>
+            </div>
+            <div>
+              <Label>Website</Label>
+              <Input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="https://..." className="bg-secondary border-border" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button variant="gold" onClick={handleCreate} disabled={saving || !form.name}>{saving ? "Salvando..." : "Criar Cliente"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

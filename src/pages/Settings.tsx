@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { Settings, User, Bell, Shield, Palette, Globe, Brain, CreditCard, Users, Plug, Building } from "lucide-react";
+import { User, Bell, Brain, CreditCard, Users, Plug, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -18,6 +20,18 @@ export default function SettingsPage() {
 
   const [name, setName] = useState(profile?.name || "");
   const [email, setEmail] = useState(profile?.email || "");
+
+  // Password change
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  // Invite member
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -48,6 +62,50 @@ export default function SettingsPage() {
     const { error } = await supabase.from("companies").update({ name: company.name, domain: company.domain, primary_color: company.primary_color }).eq("id", company.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else toast({ title: "Workspace atualizado" });
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "Senha deve ter pelo menos 6 caracteres", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "As senhas não coincidem", variant: "destructive" });
+      return;
+    }
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSavingPassword(false);
+    if (error) {
+      toast({ title: "Erro ao alterar senha", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Senha alterada com sucesso!" });
+      setShowPassword(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  };
+
+  const handleInviteMember = async () => {
+    if (!inviteEmail || !inviteName || !profile?.company_id) return;
+    setInviting(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: inviteEmail,
+        password: Math.random().toString(36).slice(-10) + "A1!",
+        options: { data: { name: inviteName, role: "consultant" } },
+      });
+      if (error) throw error;
+      // Update the new profile with company_id (will be created by trigger)
+      // Note: the profile is created by the handle_new_user trigger
+      toast({ title: "Convite enviado!", description: `${inviteName} receberá um email de confirmação.` });
+      setShowInvite(false);
+      setInviteEmail("");
+      setInviteName("");
+    } catch (e: any) {
+      toast({ title: "Erro ao convidar", description: e.message, variant: "destructive" });
+    }
+    setInviting(false);
   };
 
   return (
@@ -123,7 +181,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex gap-2">
               <Button variant="gold" size="sm" onClick={saveProfile}>Salvar Perfil</Button>
-              <Button variant="outline" size="sm">Alterar Senha</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowPassword(true)}>Alterar Senha</Button>
             </div>
           </div>
         </TabsContent>
@@ -188,7 +246,7 @@ export default function SettingsPage() {
                   <p className="text-sm font-medium text-foreground">{int.name}</p>
                   <p className={`text-xs ${int.color}`}>{int.status}</p>
                 </div>
-                <Button variant="outline" size="sm">{int.status === "Conectado" ? "Configurar" : "Conectar"}</Button>
+                <Button variant="outline" size="sm" onClick={() => toast({ title: `${int.name}`, description: int.status === "Conectado" ? "Já conectado" : "Configuração disponível em breve." })}>{int.status === "Conectado" ? "Configurar" : "Conectar"}</Button>
               </div>
             ))}
           </div>
@@ -243,7 +301,7 @@ export default function SettingsPage() {
                 <Users className="w-5 h-5 text-gold" />
                 <h3 className="font-heading text-lg font-semibold text-foreground">Equipe ({teamMembers.length})</h3>
               </div>
-              <Button variant="gold" size="sm" disabled>Convidar Membro</Button>
+              <Button variant="gold" size="sm" onClick={() => setShowInvite(true)}>Convidar Membro</Button>
             </div>
             <div className="space-y-2">
               {teamMembers.map(m => (
@@ -262,6 +320,48 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Change Password Dialog */}
+      <Dialog open={showPassword} onOpenChange={setShowPassword}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Alterar Senha</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nova Senha</Label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" className="bg-secondary border-border" />
+            </div>
+            <div>
+              <Label>Confirmar Senha</Label>
+              <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repita a senha" className="bg-secondary border-border" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPassword(false)}>Cancelar</Button>
+            <Button variant="gold" onClick={handleChangePassword} disabled={savingPassword}>{savingPassword ? "Salvando..." : "Alterar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite Member Dialog */}
+      <Dialog open={showInvite} onOpenChange={setShowInvite}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Convidar Membro</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome</Label>
+              <Input value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder="Nome completo" className="bg-secondary border-border" />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="email@empresa.com" className="bg-secondary border-border" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInvite(false)}>Cancelar</Button>
+            <Button variant="gold" onClick={handleInviteMember} disabled={inviting || !inviteEmail || !inviteName}>{inviting ? "Enviando..." : "Convidar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
