@@ -147,14 +147,18 @@ const Clients = () => {
         <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Checkbox checked={selected.size === paginated.length && paginated.length > 0} onCheckedChange={toggleAll} />
+            <span className="text-xs text-muted-foreground">Selecionar todos</span>
+          </div>
           {paginated.map((client) => (
             <div
               key={client.id}
-              onClick={() => navigate(`/clients/${client.id}`)}
               className="bg-card rounded-xl p-5 border border-border cursor-pointer transition-all duration-200 hover:border-gold-subtle hover:shadow-gold"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
+                  <Checkbox checked={selected.has(client.id)} onCheckedChange={() => toggleSelect(client.id)} onClick={(e) => e.stopPropagation()} />
                   <div className="w-11 h-11 rounded-lg bg-secondary flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-muted-foreground" />
                   </div>
