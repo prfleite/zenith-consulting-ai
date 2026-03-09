@@ -183,6 +183,7 @@ export default function ProjectDetail() {
               ))}
             </div>
           )}
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div><span className="text-xs text-muted-foreground">Progresso</span><div className="text-lg font-bold text-foreground">{pct}%</div><div className="w-full h-1.5 bg-secondary rounded-full mt-1"><div className="h-full bg-gradient-gold rounded-full" style={{ width: `${pct}%` }} /></div></div>
           <div><span className="text-xs text-muted-foreground">Horas</span><div className="text-lg font-bold text-foreground">{totalHours}h / {project.budget_hours || "∞"}h</div><div className="text-xs text-muted-foreground">{hoursUsedPct}% utilizado</div></div>
