@@ -135,7 +135,28 @@ const Proposals = () => {
           <h1 className="text-2xl font-heading font-bold text-foreground">Propostas</h1>
           <p className="text-muted-foreground text-sm">Gerencie propostas comerciais</p>
         </div>
-        <Button variant="gold" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-1" />Nova Proposta</Button>
+        <div className="flex items-center gap-2">
+          <AIAssistantPanel
+            contextType="proposal_generator"
+            title="Gerar Proposta com IA"
+            placeholder="Descreva o escopo da proposta..."
+            initialPrompt="Gere uma proposta comercial completa com título, descrição, itens detalhados com valores e prazo de validade."
+            extraContext={`Clientes disponíveis: ${clients.map(c => c.name).join(", ")}`}
+            onApplyResult={(content) => {
+              try {
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                  const data = JSON.parse(jsonMatch[0]);
+                  setForm(f => ({ ...f, title: data.title || f.title, description: data.description || "", total_value: String(data.total_value || ""), valid_until: data.valid_until || "", items: JSON.stringify(data.items || [], null, 2) }));
+                  setShowCreate(true);
+                  toast({ title: "Proposta gerada! Revise e salve." });
+                }
+              } catch { toast({ title: "Não foi possível extrair os dados", variant: "destructive" }); }
+            }}
+            applyLabel="Aplicar no Formulário"
+          />
+          <Button variant="gold" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-1" />Nova Proposta</Button>
+        </div>
       </div>
 
       <Card className="border-border">
