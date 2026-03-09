@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAIChat } from "@/lib/ai/useAIChat";
 import { Input } from "@/components/ui/input";
 
-export default function Resources() {
+const Resources = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [timeEntries, setTimeEntries] = useState<any[]>([]);
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
@@ -207,4 +207,6 @@ export default function Resources() {
       </div>
     </div>
   );
-}
+};
+
+export default Resources;

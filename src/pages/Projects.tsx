@@ -38,7 +38,7 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   cancelled: { label: "Cancelado", class: "bg-destructive/20 text-destructive" },
 };
 
-export default function Projects() {
+const Projects = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [projects, setProjects] = useState<ProjectRow[]>([]);
@@ -212,4 +212,6 @@ export default function Projects() {
       {filtered.length === 0 && <p className="text-center text-muted-foreground py-12">Nenhum projeto encontrado.</p>}
     </div>
   );
-}
+};
+
+export default Projects;

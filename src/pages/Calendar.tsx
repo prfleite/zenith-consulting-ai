@@ -29,7 +29,7 @@ const typeColors: Record<string, string> = {
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-export default function Calendar() {
+const Calendar = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [events, setEvents] = useState<CalEvent[]>([]);
@@ -176,4 +176,6 @@ export default function Calendar() {
       </div>
     </div>
   );
-}
+};
+
+export default Calendar;

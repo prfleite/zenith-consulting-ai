@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 const CHART_COLORS = ["hsl(43, 74%, 55%)", "hsl(220, 70%, 50%)", "hsl(142, 71%, 45%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(38, 92%, 50%)"];
 const tooltipStyle = { background: "hsl(220, 18%, 12%)", border: "1px solid hsl(220, 14%, 18%)", borderRadius: "8px", color: "hsl(40, 10%, 92%)" };
 
-export default function Dashboard() {
+const Dashboard = () => {
   const { profile } = useAuth();
   const [clientCount, setClientCount] = useState(0);
   const [activeProjects, setActiveProjects] = useState(0);
@@ -349,4 +349,6 @@ export default function Dashboard() {
       )}
     </div>
   );
-}
+};
+
+export default Dashboard;

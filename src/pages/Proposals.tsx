@@ -43,7 +43,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   expired: { label: "Expirada", variant: "secondary" },
 };
 
-export default function Proposals() {
+const Proposals = () => {
   const { profile } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
@@ -200,4 +200,6 @@ export default function Proposals() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Proposals;

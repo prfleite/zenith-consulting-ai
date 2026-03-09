@@ -27,7 +27,7 @@ type ClientAccount = {
 const segments = ["Enterprise", "Mid-Market", "SMB", "Startup"];
 const industries = ["Tecnologia", "Saúde", "Financeiro", "Varejo", "Educação", "Manufatura", "Serviços", "Energia", "Agro", "Outro"];
 
-export default function Clients() {
+const Clients = () => {
   const { profile } = useAuth();
   const [clients, setClients] = useState<ClientAccount[]>([]);
   const [search, setSearch] = useState("");
@@ -205,4 +205,6 @@ export default function Clients() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Clients;

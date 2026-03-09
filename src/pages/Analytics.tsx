@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 const COLORS = ["hsl(43, 74%, 55%)", "hsl(220, 70%, 50%)", "hsl(142, 71%, 45%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(38, 92%, 50%)"];
 const tooltipStyle = { background: "hsl(220, 18%, 12%)", border: "1px solid hsl(220, 14%, 18%)", borderRadius: "8px", color: "hsl(40, 10%, 92%)" };
 
-export default function Analytics() {
+const Analytics = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [timeEntries, setTimeEntries] = useState<any[]>([]);
   const [nps, setNps] = useState<any[]>([]);
@@ -505,4 +505,6 @@ export default function Analytics() {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Analytics;

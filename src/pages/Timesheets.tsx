@@ -24,7 +24,7 @@ function getWeekDays(offset: number) {
   });
 }
 
-export default function Timesheets() {
+const Timesheets = () => {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const isManager = profile?.role === "admin" || profile?.role === "manager";
@@ -204,4 +204,6 @@ export default function Timesheets() {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Timesheets;

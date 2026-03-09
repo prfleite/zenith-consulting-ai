@@ -20,7 +20,7 @@ const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
   cancelled: { label: "Cancelada", class: "bg-muted text-muted-foreground" },
 };
 
-export default function Billing() {
+const Billing = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -226,4 +226,6 @@ export default function Billing() {
       </div>
     </div>
   );
-}
+};
+
+export default Billing;

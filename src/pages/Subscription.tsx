@@ -13,7 +13,7 @@ const planColors: Record<string, string> = {
   free: "border-border", starter: "border-gold-subtle", professional: "border-gold shadow-gold", enterprise: "border-gold-subtle",
 };
 
-export default function Subscription() {
+const Subscription = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [plans, setPlans] = useState<any[]>([]);
@@ -181,4 +181,6 @@ export default function Subscription() {
       </div>
     </div>
   );
-}
+};
+
+export default Subscription;

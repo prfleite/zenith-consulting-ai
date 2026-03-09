@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIChat } from "@/lib/ai/useAIChat";
 
-export default function Portal() {
+const Portal = () => {
   const { profile } = useAuth();
   const companyId = profile?.company_id || "";
 
@@ -269,4 +269,6 @@ export default function Portal() {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Portal;

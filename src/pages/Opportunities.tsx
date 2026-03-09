@@ -31,7 +31,7 @@ const stages = [
   { key: "lost", label: "Perdido", color: "border-destructive/40" },
 ];
 
-export default function Opportunities() {
+const Opportunities = () => {
   const { profile } = useAuth();
   const [opps, setOpps] = useState<Opportunity[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
@@ -257,4 +257,6 @@ export default function Opportunities() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Opportunities;

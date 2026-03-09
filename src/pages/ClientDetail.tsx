@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
-export default function ClientDetail() {
+const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<any>(null);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -302,4 +302,6 @@ export default function ClientDetail() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default ClientDetail;

@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-export default function Reports() {
+const Reports = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -230,4 +230,6 @@ export default function Reports() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Reports;
