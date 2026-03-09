@@ -158,9 +158,10 @@ const Expenses = () => {
               <div key={e.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggleSelect(e.id)} />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{e.projects?.name}</p>
-                  <p className="text-xs text-muted-foreground">{e.date} · {e.category}{e.description ? ` · ${e.description}` : ""}</p>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{e.projects?.name}</p>
+                    <p className="text-xs text-muted-foreground">{e.date} · {e.category}{e.description ? ` · ${e.description}` : ""}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
