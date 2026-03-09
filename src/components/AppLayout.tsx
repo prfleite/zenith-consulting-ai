@@ -1,7 +1,9 @@
 import { ReactNode, useState, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
-import { Bell, AlertTriangle, Info, X } from "lucide-react";
+import { GlobalSearch } from "./GlobalSearch";
+import { Bell, AlertTriangle, Info, X, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -21,7 +23,9 @@ export function AppLayout({ children }: AppLayoutProps) {
     const channel = supabase
       .channel("ai_alerts_realtime")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "ai_alerts" }, (payload) => {
-        setAlerts(prev => [payload.new as any, ...prev].slice(0, 15));
+        const newAlert = payload.new as any;
+        setAlerts(prev => [newAlert, ...prev].slice(0, 15));
+        sonnerToast(newAlert.title, { description: newAlert.description });
       })
       .subscribe();
 
@@ -46,8 +50,14 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
-      {/* Top bar with notification bell */}
-      <div className="ml-[260px] h-12 border-b border-border flex items-center justify-end px-6 bg-card/50">
+      <GlobalSearch />
+      {/* Top bar */}
+      <div className="ml-[260px] h-12 border-b border-border flex items-center justify-end px-6 bg-card/50 gap-3">
+        <button onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-sm hover:text-foreground transition-colors">
+          <Search className="w-3.5 h-3.5" />
+          <span className="hidden md:inline">Buscar...</span>
+          <kbd className="hidden md:inline text-[10px] px-1.5 py-0.5 rounded bg-background border border-border ml-2">⌘K</kbd>
+        </button>
         <div className="relative">
           <button onClick={() => setShowAlerts(!showAlerts)} className="relative p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
             <Bell className="w-5 h-5" />
