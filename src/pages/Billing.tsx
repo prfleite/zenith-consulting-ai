@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 
 const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
   draft: { label: "Rascunho", class: "bg-muted text-muted-foreground" },
