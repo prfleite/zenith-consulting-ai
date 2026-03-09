@@ -30,6 +30,19 @@ const Expenses = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const handleBulkDelete = async () => {
+    for (const id of selected) { await supabase.from("expenses").delete().eq("id", id); }
+    toast({ title: `${selected.size} despesas excluídas` });
+    setSelected(new Set());
+    fetchExpenses();
+  };
+  const handleBulkExport = () => {
+    const items = filteredExpenses.filter(e => selected.has(e.id));
+    exportToCSV(items.map(e => ({ Data: e.date, Projeto: e.projects?.name || "—", Valor: e.amount, Categoria: e.category, Status: e.approval_status })), "despesas-selecionadas");
+  };
 
   const fetchExpenses = async () => {
     if (!user) return;
