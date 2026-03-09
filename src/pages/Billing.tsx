@@ -15,6 +15,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
 import { AIAssistantPanel } from "@/components/AIAssistantPanel";
+import { CurrencySelector } from "@/components/CurrencySelector";
+import { useCurrency } from "@/hooks/useCurrency";
 
 const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
   draft: { label: "Rascunho", class: "bg-muted text-muted-foreground" },
@@ -40,6 +42,7 @@ const Billing = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { displayCurrency, setDisplayCurrency, convertAndFormat } = useCurrency("BRL");
 
   const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const handleBulkPaid = async () => {
@@ -162,18 +165,22 @@ const Billing = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         <div className="bg-card rounded-xl p-5 border border-border shadow-card">
           <span className="text-sm text-muted-foreground">Total Faturado</span>
-          <p className="text-2xl font-bold text-foreground">R$ {totalInvoiced.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-foreground">{convertAndFormat(totalInvoiced)}</p>
         </div>
         <div className="bg-card rounded-xl p-5 border border-border shadow-card">
           <span className="text-sm text-muted-foreground">Total Recebido</span>
-          <p className="text-2xl font-bold text-success">R$ {totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-success">{convertAndFormat(totalPaid)}</p>
         </div>
         <div className="bg-card rounded-xl p-5 border border-border shadow-card">
           <span className="text-sm text-muted-foreground">Pendente</span>
-          <p className="text-2xl font-bold text-warning">R$ {totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-warning">{convertAndFormat(totalPending)}</p>
+        </div>
+        <div className="bg-card rounded-xl p-5 border border-border shadow-card flex flex-col items-center justify-center gap-2">
+          <span className="text-sm text-muted-foreground">Moeda</span>
+          <CurrencySelector value={displayCurrency} onChange={setDisplayCurrency} />
         </div>
       </div>
 
