@@ -20,11 +20,43 @@ const steps = [
   },
   {
     target: '[href="/projects"]',
-    content: "Projetos com tarefas, timesheets, membros da equipe e acompanhamento financeiro.",
+    content: "Projetos com tarefas (drag-and-drop), timesheets, membros da equipe e IA para plano de projeto.",
+  },
+  {
+    target: '[href="/billing"]',
+    content: "Faturamento com previsão de fluxo de caixa por IA, filtros avançados e ações em lote.",
+  },
+  {
+    target: '[href="/proposals"]',
+    content: "Crie propostas comerciais — ou deixe a IA gerar automaticamente com base no cliente.",
+  },
+  {
+    target: '[href="/contracts"]',
+    content: "Contratos com geração automática por IA a partir de propostas aceitas.",
+  },
+  {
+    target: '[href="/timesheets"]',
+    content: "Timesheets com preenchimento inteligente por IA baseado em tarefas e agenda.",
+  },
+  {
+    target: '[href="/expenses"]',
+    content: "Gestão de despesas com análise de anomalias e categorização automática por IA.",
+  },
+  {
+    target: '[href="/analytics"]',
+    content: "Analytics com insights automáticos gerados por IA ao carregar a página.",
+  },
+  {
+    target: '[href="/calendar"]',
+    content: "Calendário com sugestões inteligentes de reuniões e blocos de trabalho.",
   },
   {
     target: '[href="/ai-insights"]',
     content: "Chat com IA para obter insights sobre seus dados, previsões e recomendações.",
+  },
+  {
+    target: '[href="/reports"]',
+    content: "Relatórios automáticos gerados por IA com exportação em PDF branded.",
   },
   {
     target: '[href="/settings"]',

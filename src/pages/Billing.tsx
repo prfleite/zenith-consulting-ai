@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 
 const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
   draft: { label: "Rascunho", class: "bg-muted text-muted-foreground" },
@@ -218,6 +219,15 @@ const Billing = () => {
           <Button variant="gold" size="sm" onClick={handleBulkPaid}><CheckCircle2 className="w-4 h-4 mr-1" /> Marcar Pagas ({selected.size})</Button>
         )}
       </div>
+
+      {/* AI Cash Flow Prediction */}
+      <AIAssistantPanel
+        contextType="billing_forecast"
+        title="Previsão de Fluxo de Caixa IA"
+        placeholder="Ex: Qual a previsão de recebimento para os próximos 3 meses?"
+        initialPrompt="Analise o histórico de faturas e gere uma previsão de fluxo de caixa para os próximos 3 meses com recomendações de cobrança."
+        extraContext={`Resumo de faturas:\n- Total faturado: R$ ${totalInvoiced.toLocaleString("pt-BR")}\n- Total recebido: R$ ${totalPaid.toLocaleString("pt-BR")}\n- Pendente: R$ ${totalPending.toLocaleString("pt-BR")}\n- Faturas por status: ${Object.entries(invoiceStatusConfig).map(([k]) => `${k}: ${invoices.filter(i => i.status === k).length}`).join(", ")}\n- Últimas faturas: ${invoices.slice(0, 10).map(i => `${i.number} R$${i.amount} ${i.status} venc:${i.due_date || "N/A"}`).join("; ")}`}
+      />
 
       {/* Invoice List */}
       <div className="space-y-2">
