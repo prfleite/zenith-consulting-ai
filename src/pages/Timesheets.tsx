@@ -94,8 +94,15 @@ export default function Timesheets() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Timesheets</h1>
           <p className="text-muted-foreground mt-1">Registro e aprovação de horas</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Registrar Horas</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(entries.map(e => ({ Data: e.date, Projeto: (e as any).project?.name || "—", Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "" })), "timesheets")}>
+            <Download className="w-4 h-4" /> CSV
+          </Button>
+          <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Timesheets", entries.map(e => ({ Data: e.date, Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "—" })))}>
+            <FileDown className="w-4 h-4" /> PDF
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Registrar Horas</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Horas</DialogTitle></DialogHeader>
             <div className="space-y-3">
