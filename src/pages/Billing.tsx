@@ -226,6 +226,8 @@ const Billing = () => {
           const next = nextStatus[inv.status];
           return (
             <div key={inv.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between hover:border-gold-subtle transition-colors">
+              <div className="flex items-center gap-3">
+                <Checkbox checked={selected.has(inv.id)} onCheckedChange={() => toggleSelect(inv.id)} />
               <div>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-foreground">{inv.number}</p>
