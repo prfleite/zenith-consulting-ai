@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { TablePagination } from "@/components/TablePagination";
 
 const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
   draft: { label: "Rascunho", class: "bg-muted text-muted-foreground" },
@@ -30,8 +32,11 @@ const Billing = () => {
   const [clientFilter, setClientFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editInvoice, setEditInvoice] = useState<any>(null);
   const [form, setForm] = useState({ number: "", client_account_id: "", project_id: "", amount: "", issue_date: "", due_date: "", notes: "" });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const fetchInvoices = async () => {
     const { data } = await supabase.from("invoices").select("*, client_accounts(name), projects(name)")
@@ -75,8 +80,12 @@ const Billing = () => {
     if (statusFilter !== "all" && inv.status !== statusFilter) return false;
     if (clientFilter !== "all" && inv.client_account_id !== clientFilter) return false;
     if (search && !inv.number.toLowerCase().includes(search.toLowerCase())) return false;
+    if (dateFrom && new Date(inv.issue_date) < dateFrom) return false;
+    if (dateTo && new Date(inv.issue_date) > new Date(dateTo.getTime() + 86400000)) return false;
     return true;
   });
+
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const totalInvoiced = invoices.reduce((s, i) => s + Number(i.amount), 0);
   const totalPaid = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
@@ -180,25 +189,26 @@ const Billing = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Buscar por número..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-[160px]"><Filter className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos Status</SelectItem>
             {Object.entries(invoiceStatusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={clientFilter} onValueChange={setClientFilter}>
+        <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setPage(1); }}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Cliente" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos Clientes</SelectItem>
             {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
+        <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
       </div>
 
       {/* Invoice List */}
       <div className="space-y-2">
-        {filtered.map((inv: any) => {
+        {paginated.map((inv: any) => {
           const sc = invoiceStatusConfig[inv.status] || invoiceStatusConfig.draft;
           const next = nextStatus[inv.status];
           return (
@@ -224,6 +234,10 @@ const Billing = () => {
         })}
         {filtered.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhuma fatura encontrada.</p>}
       </div>
+
+      {filtered.length > 0 && (
+        <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+      )}
     </div>
   );
 };

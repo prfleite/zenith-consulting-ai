@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { TablePagination } from "@/components/TablePagination";
 
 function getWeekDays(offset: number) {
   const today = new Date();
@@ -36,6 +38,10 @@ const Timesheets = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ date: "", project_id: "", task_id: "", hours: "", billable: true, notes: "" });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const fetchEntries = async () => {
     if (!user) return;
@@ -62,7 +68,6 @@ const Timesheets = () => {
   };
 
   useEffect(() => { fetchEntries(); fetchPending(); fetchProjects(); }, [weekOffset, user]);
-
   useEffect(() => { if (form.project_id) fetchTasks(form.project_id); }, [form.project_id]);
 
   const handleCreate = async () => {
@@ -87,6 +92,14 @@ const Timesheets = () => {
   const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   const weekTotal = entries.reduce((s, e) => s + Number(e.hours), 0);
 
+  const filteredEntries = entries.filter(e => {
+    if (dateFrom && new Date(e.date) < dateFrom) return false;
+    if (dateTo && new Date(e.date) > new Date(dateTo.getTime() + 86400000)) return false;
+    return true;
+  });
+
+  const paginatedEntries = filteredEntries.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="p-8 space-y-6 animate-fade-in">
       <div className="flex items-end justify-between">
@@ -95,7 +108,7 @@ const Timesheets = () => {
           <p className="text-muted-foreground mt-1">Registro e aprovação de horas</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(entries.map(e => ({ Data: e.date, Projeto: (e as any).project?.name || "—", Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "" })), "timesheets")}>
+          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(entries.map(e => ({ Data: e.date, Projeto: (e as any).projects?.name || "—", Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "" })), "timesheets")}>
             <Download className="w-4 h-4" /> CSV
           </Button>
           <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Timesheets", entries.map(e => ({ Data: e.date, Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "—" })))}>
@@ -166,9 +179,13 @@ const Timesheets = () => {
             })}
           </div>
 
-          {/* Entries list */}
+          {/* Date filter + entries list */}
+          <div className="flex flex-wrap gap-3">
+            <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+          </div>
+
           <div className="space-y-2">
-            {entries.map((e: any) => (
+            {paginatedEntries.map((e: any) => (
               <div key={e.id} className="bg-card rounded-lg p-3 border border-border flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">{e.projects?.name} · {e.date}</p>
@@ -181,6 +198,10 @@ const Timesheets = () => {
               </div>
             ))}
           </div>
+
+          {filteredEntries.length > 0 && (
+            <TablePagination totalItems={filteredEntries.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+          )}
         </TabsContent>
 
         {isManager && (

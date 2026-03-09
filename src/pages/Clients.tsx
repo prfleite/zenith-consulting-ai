@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { TablePagination } from "@/components/TablePagination";
 
 type ClientAccount = {
   id: string;
@@ -21,6 +23,7 @@ type ClientAccount = {
   health_score: number | null;
   annual_revenue: number | null;
   owner_id: string | null;
+  created_at: string;
   owner?: { name: string } | null;
 };
 
@@ -35,6 +38,10 @@ const Clients = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", segment: "", industry: "", country: "Brasil", website: "", annual_revenue: "" });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const navigate = useNavigate();
 
   const fetchClients = async () => {
@@ -72,11 +79,14 @@ const Clients = () => {
     fetchClients();
   };
 
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    (c.segment || "").toLowerCase().includes(search.toLowerCase()) ||
-    (c.industry || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = clients.filter(c => {
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !(c.segment || "").toLowerCase().includes(search.toLowerCase()) && !(c.industry || "").toLowerCase().includes(search.toLowerCase())) return false;
+    if (dateFrom && new Date(c.created_at) < dateFrom) return false;
+    if (dateTo && new Date(c.created_at) > new Date(dateTo.getTime() + 86400000)) return false;
+    return true;
+  });
+
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const getHealthColor = (score: number | null) => {
     if (!score) return "text-muted-foreground";
@@ -110,16 +120,19 @@ const Clients = () => {
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Buscar por nome, segmento ou indústria..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-card border-border" />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Buscar por nome, segmento ou indústria..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-card border-border" />
+        </div>
+        <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((client) => (
+          {paginated.map((client) => (
             <div
               key={client.id}
               onClick={() => navigate(`/clients/${client.id}`)}
@@ -152,9 +165,13 @@ const Clients = () => {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && !search && <EmptyState {...emptyStates.clients} actionLabel="Novo Cliente" onAction={() => setShowCreate(true)} />}
-          {filtered.length === 0 && search && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
+          {filtered.length === 0 && !search && !dateFrom && !dateTo && <EmptyState {...emptyStates.clients} actionLabel="Novo Cliente" onAction={() => setShowCreate(true)} />}
+          {filtered.length === 0 && (search || dateFrom || dateTo) && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
         </div>
+      )}
+
+      {filtered.length > 0 && (
+        <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
       )}
 
       {/* Create Client Dialog */}

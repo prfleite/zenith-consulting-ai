@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { TablePagination } from "@/components/TablePagination";
 
 type ProjectRow = {
   id: string;
@@ -49,6 +51,10 @@ const Projects = () => {
   const [clientFilter, setClientFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: "", code: "", client_account_id: "", project_manager_id: "", status: "planning", start_date: "", end_date_planned: "", budget_hours: "", budget_fee: "", description: "" });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const fetchProjects = async () => {
     const { data } = await supabase
@@ -56,14 +62,8 @@ const Projects = () => {
       .select("*, client_accounts(name), manager:profiles!projects_project_manager_id_fkey(name)")
       .order("created_at", { ascending: false });
     if (!data) return;
-
-    // get task counts
     const ids = data.map((p) => p.id);
-    const { data: tasks } = await supabase
-      .from("project_tasks")
-      .select("project_id, status")
-      .in("project_id", ids);
-
+    const { data: tasks } = await supabase.from("project_tasks").select("project_id, status").in("project_id", ids);
     const enriched = data.map((p) => {
       const pt = (tasks || []).filter((t) => t.project_id === p.id);
       return { ...p, task_total: pt.length, task_done: pt.filter((t) => t.status === "done").length } as ProjectRow;
@@ -85,17 +85,12 @@ const Projects = () => {
   const handleCreate = async () => {
     if (!form.name || !form.client_account_id || !profile?.company_id) return;
     const { error } = await supabase.from("projects").insert({
-      name: form.name,
-      code: form.code || null,
-      client_account_id: form.client_account_id,
-      project_manager_id: form.project_manager_id || null,
-      status: form.status as any,
-      start_date: form.start_date || null,
-      end_date_planned: form.end_date_planned || null,
+      name: form.name, code: form.code || null, client_account_id: form.client_account_id,
+      project_manager_id: form.project_manager_id || null, status: form.status as any,
+      start_date: form.start_date || null, end_date_planned: form.end_date_planned || null,
       budget_hours: form.budget_hours ? Number(form.budget_hours) : null,
       budget_fee: form.budget_fee ? Number(form.budget_fee) : null,
-      description: form.description || null,
-      company_id: profile.company_id,
+      description: form.description || null, company_id: profile.company_id,
     });
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Projeto criado!" });
@@ -108,8 +103,12 @@ const Projects = () => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter !== "all" && p.status !== statusFilter) return false;
     if (clientFilter !== "all" && p.client_account_id !== clientFilter) return false;
+    if (dateFrom && p.start_date && new Date(p.start_date) < dateFrom) return false;
+    if (dateTo && p.start_date && new Date(p.start_date) > new Date(dateTo.getTime() + 86400000)) return false;
     return true;
   });
+
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
@@ -160,25 +159,26 @@ const Projects = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Buscar projetos..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-[160px]"><Filter className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos Status</SelectItem>
             {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={clientFilter} onValueChange={setClientFilter}>
+        <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setPage(1); }}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Cliente" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos Clientes</SelectItem>
             {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
+        <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
       </div>
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filtered.map((project, i) => {
+        {paginated.map((project, i) => {
           const pct = project.task_total ? Math.round((project.task_done! / project.task_total) * 100) : 0;
           const sc = statusConfig[project.status] || statusConfig.planning;
           return (
@@ -210,6 +210,10 @@ const Projects = () => {
         })}
       </div>
       {filtered.length === 0 && <p className="text-center text-muted-foreground py-12">Nenhum projeto encontrado.</p>}
+
+      {filtered.length > 0 && (
+        <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+      )}
     </div>
   );
 };
