@@ -92,6 +92,7 @@ export default function OpportunityDetail() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in max-w-5xl">
+      <Breadcrumbs entityName={opp.title} />
       <Link to="/opportunities" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" /> Voltar para Oportunidades
       </Link>
