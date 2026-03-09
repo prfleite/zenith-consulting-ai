@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAIChat } from "@/lib/ai/useAIChat";
 import { ArrowLeft, Target, Building2, DollarSign, Calendar, Percent, Sparkles, Send, FileText, FolderKanban } from "lucide-react";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,6 +93,7 @@ export default function OpportunityDetail() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in max-w-5xl">
+      <Breadcrumbs entityName={opp.title} />
       <Link to="/opportunities" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" /> Voltar para Oportunidades
       </Link>

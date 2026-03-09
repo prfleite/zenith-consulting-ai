@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { EmptyState, emptyStates } from "@/components/EmptyState";
 import { Search, Plus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +143,8 @@ export default function Clients() {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
+          {filtered.length === 0 && !search && <EmptyState {...emptyStates.clients} actionLabel="Novo Cliente" onAction={() => setShowCreate(true)} />}
+          {filtered.length === 0 && search && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
         </div>
       )}
 
