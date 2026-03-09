@@ -44,6 +44,7 @@ export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const { toast } = useToast();
+  const onlineUsers = usePresence(id ? `project-${id}` : "");
   const [project, setProject] = useState<any>(null);
   const [tasks, setTasks] = useState<Tables<"project_tasks">[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
