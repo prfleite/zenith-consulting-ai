@@ -15,6 +15,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
 import { AIAssistantPanel } from "@/components/AIAssistantPanel";
+import { CurrencySelector } from "@/components/CurrencySelector";
+import { useCurrency } from "@/hooks/useCurrency";
 
 const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
   draft: { label: "Rascunho", class: "bg-muted text-muted-foreground" },
