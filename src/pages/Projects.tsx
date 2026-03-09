@@ -212,4 +212,6 @@ const Projects = () => {
       {filtered.length === 0 && <p className="text-center text-muted-foreground py-12">Nenhum projeto encontrado.</p>}
     </div>
   );
-}
+};
+
+export default Projects;

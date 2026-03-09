@@ -204,4 +204,6 @@ const Timesheets = () => {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Timesheets;

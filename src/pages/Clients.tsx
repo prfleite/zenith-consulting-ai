@@ -205,4 +205,6 @@ const Clients = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Clients;

@@ -230,4 +230,6 @@ const Reports = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Reports;

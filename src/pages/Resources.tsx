@@ -207,4 +207,6 @@ const Resources = () => {
       </div>
     </div>
   );
-}
+};
+
+export default Resources;

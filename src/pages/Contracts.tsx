@@ -136,4 +136,6 @@ const Contracts = () => {
       )}
     </div>
   );
-}
+};
+
+export default Contracts;

@@ -181,4 +181,6 @@ const Subscription = () => {
       </div>
     </div>
   );
-}
+};
+
+export default Subscription;

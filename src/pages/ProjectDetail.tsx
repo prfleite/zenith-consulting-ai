@@ -406,4 +406,6 @@ const ProjectDetail = () => {
       </Tabs>
     </div>
   );
-}
+};
+
+export default ProjectDetail;

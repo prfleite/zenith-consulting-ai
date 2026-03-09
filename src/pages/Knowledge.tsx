@@ -256,4 +256,6 @@ const Knowledge = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Knowledge;

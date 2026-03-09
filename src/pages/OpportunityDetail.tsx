@@ -219,4 +219,6 @@ const OpportunityDetail = () => {
       )}
     </div>
   );
-}
+};
+
+export default OpportunityDetail;

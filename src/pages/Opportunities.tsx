@@ -257,4 +257,6 @@ const Opportunities = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Opportunities;

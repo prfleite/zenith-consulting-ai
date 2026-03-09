@@ -159,4 +159,6 @@ const Expenses = () => {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Expenses;

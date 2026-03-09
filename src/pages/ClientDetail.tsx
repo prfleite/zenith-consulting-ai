@@ -302,4 +302,6 @@ const ClientDetail = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default ClientDetail;

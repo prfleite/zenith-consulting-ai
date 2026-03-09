@@ -269,4 +269,6 @@ const Portal = () => {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Portal;

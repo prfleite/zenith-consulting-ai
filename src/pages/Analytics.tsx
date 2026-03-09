@@ -505,4 +505,6 @@ const Analytics = () => {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Analytics;

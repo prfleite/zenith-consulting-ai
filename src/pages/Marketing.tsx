@@ -797,4 +797,6 @@ const Marketing = () => {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Marketing;

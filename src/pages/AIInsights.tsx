@@ -114,4 +114,6 @@ const AIInsights = () => {
       </div>
     </div>
   );
-}
+};
+
+export default AIInsights;

@@ -200,4 +200,6 @@ const Proposals = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default Proposals;

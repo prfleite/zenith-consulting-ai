@@ -364,4 +364,6 @@ const SettingsPage = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default SettingsPage;
