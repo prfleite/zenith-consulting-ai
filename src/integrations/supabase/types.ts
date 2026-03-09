@@ -2149,6 +2149,7 @@ export type Database = {
         Args: { _company_id: string }
         Returns: undefined
       }
+      generate_project_code: { Args: { _company_id: string }; Returns: string }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       is_client_user: { Args: { _user_id: string }; Returns: boolean }
     }

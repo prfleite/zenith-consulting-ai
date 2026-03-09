@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Check, X, Trash2, Edit2 } from "lucide-react";
+import { Plus, Check, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { TablePagination } from "@/components/TablePagination";
 
 const categories = ["Transporte", "Hospedagem", "Alimentação", "Software", "Outros"];
 
@@ -22,6 +24,10 @@ const Expenses = () => {
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ date: "", project_id: "", category: "Outros", amount: "", description: "", receipt_url: "" });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const fetchExpenses = async () => {
     if (!user) return;
@@ -69,7 +75,14 @@ const Expenses = () => {
     fetchPending();
   };
 
-  const totalAmount = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const filteredExpenses = expenses.filter(e => {
+    if (dateFrom && new Date(e.date) < dateFrom) return false;
+    if (dateTo && new Date(e.date) > new Date(dateTo.getTime() + 86400000)) return false;
+    return true;
+  });
+
+  const paginatedExpenses = filteredExpenses.slice((page - 1) * pageSize, page * pageSize);
+  const totalAmount = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
@@ -112,12 +125,15 @@ const Expenses = () => {
         </TabsList>
 
         <TabsContent value="my" className="space-y-4">
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <span className="text-xs text-muted-foreground">Total</span>
-            <p className="text-lg font-bold text-foreground">R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="bg-card rounded-xl p-4 border border-border">
+              <span className="text-xs text-muted-foreground">Total</span>
+              <p className="text-lg font-bold text-foreground">R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+            </div>
+            <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
           </div>
           <div className="space-y-2">
-            {expenses.map((e: any) => (
+            {paginatedExpenses.map((e: any) => (
               <div key={e.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground">{e.projects?.name}</p>
@@ -135,6 +151,9 @@ const Expenses = () => {
               </div>
             ))}
           </div>
+          {filteredExpenses.length > 0 && (
+            <TablePagination totalItems={filteredExpenses.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+          )}
         </TabsContent>
 
         {isManager && (

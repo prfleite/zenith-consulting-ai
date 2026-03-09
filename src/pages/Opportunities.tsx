@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { TablePagination } from "@/components/TablePagination";
 
 type Opportunity = {
   id: string;
@@ -40,6 +42,10 @@ const Opportunities = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: "", client_account_id: "", expected_value: "", probability: "10", stage: "lead", close_date: "", description: "" });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const fetchData = async () => {
     const [{ data: oppsData }, { data: clientsData }] = await Promise.all([
@@ -57,21 +63,13 @@ const Opportunities = () => {
     if (!form.title || !form.client_account_id || !profile?.company_id) return;
     setSaving(true);
     const { error } = await supabase.from("opportunities").insert({
-      company_id: profile.company_id,
-      title: form.title,
-      client_account_id: form.client_account_id,
+      company_id: profile.company_id, title: form.title, client_account_id: form.client_account_id,
       expected_value: form.expected_value ? Number(form.expected_value) : 0,
-      probability: Number(form.probability) || 10,
-      stage: form.stage as any,
-      close_date: form.close_date || null,
-      description: form.description || null,
-      owner_id: profile.id,
+      probability: Number(form.probability) || 10, stage: form.stage as any,
+      close_date: form.close_date || null, description: form.description || null, owner_id: profile.id,
     });
     setSaving(false);
-    if (error) {
-      toast({ title: "Erro ao criar oportunidade", description: error.message, variant: "destructive" });
-      return;
-    }
+    if (error) { toast({ title: "Erro ao criar oportunidade", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Oportunidade criada!" });
     setShowCreate(false);
     setForm({ title: "", client_account_id: "", expected_value: "", probability: "10", stage: "lead", close_date: "", description: "" });
@@ -85,9 +83,15 @@ const Opportunities = () => {
 
   const formatValue = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}K` : `R$ ${v}`;
 
-  const stageTotal = (stageKey: string) => {
-    return opps.filter(o => o.stage === stageKey).reduce((sum, o) => sum + (o.expected_value || 0), 0);
-  };
+  const stageTotal = (stageKey: string) => opps.filter(o => o.stage === stageKey).reduce((sum, o) => sum + (o.expected_value || 0), 0);
+
+  const filteredOpps = opps.filter(o => {
+    if (dateFrom && o.close_date && new Date(o.close_date) < dateFrom) return false;
+    if (dateTo && o.close_date && new Date(o.close_date) > new Date(dateTo.getTime() + 86400000)) return false;
+    return true;
+  });
+
+  const paginatedList = filteredOpps.slice((page - 1) * pageSize, page * pageSize);
 
   if (loading) return <div className="flex justify-center items-center h-96"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>;
 
@@ -101,7 +105,6 @@ const Opportunities = () => {
         <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Nova Oportunidade</Button>
       </div>
       <EmptyState {...emptyStates.opportunities} actionLabel="Nova Oportunidade" onAction={() => setShowCreate(true)} />
-      {/* Create Opportunity Dialog - duplicated for empty state */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Nova Oportunidade</DialogTitle></DialogHeader>
@@ -142,35 +145,26 @@ const Opportunities = () => {
         </div>
       </div>
 
+      {view === "list" && (
+        <div className="flex flex-wrap gap-3">
+          <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+        </div>
+      )}
+
       {view === "kanban" ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {stages.map((stage) => {
-            const stageOpps = opps.filter(o => o.stage === stage.key);
+            const stageOpps = filteredOpps.filter(o => o.stage === stage.key);
             return (
-              <div
-                key={stage.key}
-                className="space-y-3"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  const oppId = e.dataTransfer.getData("oppId");
-                  if (oppId) handleDrop(oppId, stage.key);
-                }}
-              >
+              <div key={stage.key} className="space-y-3" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { const oppId = e.dataTransfer.getData("oppId"); if (oppId) handleDrop(oppId, stage.key); }}>
                 <div className="flex items-center justify-between px-1">
                   <span className="text-sm font-medium text-foreground">{stage.label}</span>
                   <span className="text-xs text-muted-foreground">{stageOpps.length}</span>
                 </div>
                 <p className="text-xs text-muted-foreground px-1">{formatValue(stageTotal(stage.key))}</p>
-
                 <div className="space-y-2 min-h-[100px]">
                   {stageOpps.map((opp) => (
-                    <Link
-                      key={opp.id}
-                      to={`/opportunities/${opp.id}`}
-                      draggable
-                      onDragStart={(e) => e.dataTransfer.setData("oppId", opp.id)}
-                      className={`block bg-card rounded-lg p-3 border ${stage.color} hover:shadow-gold transition-all cursor-grab active:cursor-grabbing`}
-                    >
+                    <Link key={opp.id} to={`/opportunities/${opp.id}`} draggable onDragStart={(e) => e.dataTransfer.setData("oppId", opp.id)} className={`block bg-card rounded-lg p-3 border ${stage.color} hover:shadow-gold transition-all cursor-grab active:cursor-grabbing`}>
                       <h4 className="text-xs font-semibold text-foreground leading-tight mb-1">{opp.title}</h4>
                       <p className="text-xs text-muted-foreground truncate">{(opp.client_account as any)?.name}</p>
                       <div className="flex justify-between items-center mt-2">
@@ -185,24 +179,29 @@ const Opportunities = () => {
           })}
         </div>
       ) : (
-        <div className="space-y-2">
-          {opps.map((opp) => (
-            <Link key={opp.id} to={`/opportunities/${opp.id}`} className="bg-card rounded-xl p-4 border border-border flex items-center justify-between hover:border-gold-subtle transition-colors block">
-              <div className="flex items-center gap-4">
-                <Target className="w-5 h-5 text-gold" />
-                <div>
-                  <h4 className="font-semibold text-foreground text-sm">{opp.title}</h4>
-                  <p className="text-xs text-muted-foreground">{(opp.client_account as any)?.name} · {stages.find(s => s.key === opp.stage)?.label}</p>
+        <>
+          <div className="space-y-2">
+            {paginatedList.map((opp) => (
+              <Link key={opp.id} to={`/opportunities/${opp.id}`} className="bg-card rounded-xl p-4 border border-border flex items-center justify-between hover:border-gold-subtle transition-colors block">
+                <div className="flex items-center gap-4">
+                  <Target className="w-5 h-5 text-gold" />
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">{opp.title}</h4>
+                    <p className="text-xs text-muted-foreground">{(opp.client_account as any)?.name} · {stages.find(s => s.key === opp.stage)?.label}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-6 text-sm">
-                <span className="text-foreground font-medium">{formatValue(opp.expected_value)}</span>
-                <span className="text-muted-foreground">{opp.probability}%</span>
-                <span className="text-muted-foreground">{opp.close_date || "—"}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="flex items-center gap-6 text-sm">
+                  <span className="text-foreground font-medium">{formatValue(opp.expected_value)}</span>
+                  <span className="text-muted-foreground">{opp.probability}%</span>
+                  <span className="text-muted-foreground">{opp.close_date || "—"}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+          {filteredOpps.length > 0 && (
+            <TablePagination totalItems={filteredOpps.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+          )}
+        </>
       )}
 
       {/* Create Opportunity Dialog */}
@@ -210,44 +209,27 @@ const Opportunities = () => {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Nova Oportunidade</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Título *</Label>
-              <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Consultoria estratégica" className="bg-secondary border-border" />
-            </div>
-            <div>
-              <Label>Cliente *</Label>
+            <div><Label>Título *</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Consultoria estratégica" className="bg-secondary border-border" /></div>
+            <div><Label>Cliente *</Label>
               <Select value={form.client_account_id} onValueChange={v => setForm(f => ({ ...f, client_account_id: v }))}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
                 <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Valor Esperado (R$)</Label>
-                <Input type="number" value={form.expected_value} onChange={e => setForm(f => ({ ...f, expected_value: e.target.value }))} placeholder="0" className="bg-secondary border-border" />
-              </div>
-              <div>
-                <Label>Probabilidade (%)</Label>
-                <Input type="number" value={form.probability} onChange={e => setForm(f => ({ ...f, probability: e.target.value }))} min="0" max="100" className="bg-secondary border-border" />
-              </div>
+              <div><Label>Valor Esperado (R$)</Label><Input type="number" value={form.expected_value} onChange={e => setForm(f => ({ ...f, expected_value: e.target.value }))} placeholder="0" className="bg-secondary border-border" /></div>
+              <div><Label>Probabilidade (%)</Label><Input type="number" value={form.probability} onChange={e => setForm(f => ({ ...f, probability: e.target.value }))} min="0" max="100" className="bg-secondary border-border" /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Estágio</Label>
+              <div><Label>Estágio</Label>
                 <Select value={form.stage} onValueChange={v => setForm(f => ({ ...f, stage: v }))}>
                   <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{stages.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Data de Fechamento</Label>
-                <Input type="date" value={form.close_date} onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))} className="bg-secondary border-border" />
-              </div>
+              <div><Label>Data de Fechamento</Label><Input type="date" value={form.close_date} onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))} className="bg-secondary border-border" /></div>
             </div>
-            <div>
-              <Label>Descrição</Label>
-              <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Opcional" className="bg-secondary border-border" />
-            </div>
+            <div><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Opcional" className="bg-secondary border-border" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
