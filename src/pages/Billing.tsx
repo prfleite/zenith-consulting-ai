@@ -137,7 +137,8 @@ export default function Billing() {
               <Button variant="gold" className="w-full" onClick={handleCreate}>Criar Fatura</Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Summary Cards */}
