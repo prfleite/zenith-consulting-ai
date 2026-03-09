@@ -47,7 +47,7 @@ const Install = () => {
         <CardContent className="space-y-6">
           {isInstalled ? (
             <div className="flex flex-col items-center gap-3 text-center py-4">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
+              <CheckCircle2 className="h-12 w-12 text-primary" />
               <p className="text-lg font-medium">App já instalado!</p>
               <p className="text-sm text-muted-foreground">
                 Abra o ApexConsult pela sua tela inicial.

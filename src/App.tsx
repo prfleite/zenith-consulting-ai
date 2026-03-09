@@ -110,8 +110,9 @@ function AppRoutes() {
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/portal" element={<Portal />} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<NotFound />} />
+           <Route path="/install" element={<Install />} />
+           <Route path="/login" element={<Navigate to="/" replace />} />
+           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </AppLayout>
