@@ -118,6 +118,7 @@ export default function ClientDetail() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
+      <Breadcrumbs entityName={client.name} />
       <Link to="/clients" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" /> Voltar para Clientes
       </Link>

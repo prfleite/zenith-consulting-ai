@@ -143,7 +143,8 @@ export default function Clients() {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
+          {filtered.length === 0 && !search && <EmptyState {...emptyStates.clients} actionLabel="Novo Cliente" onAction={() => setShowCreate(true)} />}
+          {filtered.length === 0 && search && <p className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado</p>}
         </div>
       )}
 
