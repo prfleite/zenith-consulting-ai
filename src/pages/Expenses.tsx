@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 
 const categories = ["Transporte", "Hospedagem", "Alimentação", "Software", "Outros"];
 
