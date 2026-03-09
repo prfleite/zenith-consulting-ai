@@ -2145,6 +2145,10 @@ export type Database = {
         Args: { _client_account_id: string; _user_id: string }
         Returns: boolean
       }
+      decrement_ai_credits: {
+        Args: { _company_id: string }
+        Returns: undefined
+      }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       is_client_user: { Args: { _user_id: string }; Returns: boolean }
     }
