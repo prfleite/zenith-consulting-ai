@@ -129,6 +129,7 @@ export default function Timesheets() {
           </DialogContent>
         </Dialog>
         </div>
+      </div>
 
       <Tabs defaultValue="my">
         <TabsList className="bg-secondary">
