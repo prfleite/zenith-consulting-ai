@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, DollarSign, Users, Star, FolderKanban, Megaphone, Brain } from "lucide-react";
+import { BarChart3, DollarSign, Users, Star, FolderKanban, Megaphone, Brain, Loader2, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAIChat } from "@/lib/ai/useAIChat";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ScatterChart, Scatter, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -184,6 +185,23 @@ const Analytics = () => {
 
   const avgNps = nps.length ? (nps.reduce((s, n) => s + n.score, 0) / nps.length).toFixed(1) : "—";
 
+  // AI Insights
+  const { messages: aiMessages, isLoading: aiLoading, sendMessage: aiSend } = useAIChat({ contextType: "global" });
+  const [insightsGenerated, setInsightsGenerated] = useState(false);
+
+  useEffect(() => {
+    if (invoices.length > 0 && !insightsGenerated && aiMessages.length === 0) {
+      const totalRev = invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
+      const totalPending = invoices.filter(i => ["sent", "overdue"].includes(i.status)).reduce((s, i) => s + Number(i.amount), 0);
+      const activeProj = projects.filter(p => p.status === "active").length;
+      const wonOps = opportunities.filter(o => o.stage === "won").length;
+      const convRate = opportunities.length > 0 ? Math.round(wonOps / opportunities.length * 100) : 0;
+      const kpiContext = `KPIs atuais:\n- Receita recebida: R$ ${totalRev.toLocaleString("pt-BR")}\n- Pendente: R$ ${totalPending.toLocaleString("pt-BR")}\n- Projetos ativos: ${activeProj}\n- NPS médio: ${avgNps}\n- Taxa conversão: ${convRate}%\n- Oportunidades: ${opportunities.length}\n- Campanhas ativas: ${campaigns.filter(c => c.status === "active").length}`;
+      aiSend("Analise os KPIs e gere 3-5 insights concisos (tendências, anomalias, recomendações). Seja direto e prático. Use bullets.", kpiContext);
+      setInsightsGenerated(true);
+    }
+  }, [invoices, projects, opportunities, campaigns, nps]);
+
   const npsOverTime = useMemo(() => {
     const map: Record<string, number[]> = {};
     nps.forEach(n => {
@@ -199,6 +217,20 @@ const Analytics = () => {
         <h1 className="text-3xl font-heading font-bold text-foreground">Analytics Avançado</h1>
         <p className="text-muted-foreground mt-1">Análises detalhadas por área</p>
       </div>
+
+      {/* AI Insights Panel */}
+      {(aiLoading || aiMessages.length > 0) && (
+        <div className="bg-card rounded-xl p-5 border border-gold/20 shadow-gold">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-gold" />
+            <h3 className="text-sm font-heading font-semibold text-foreground">Insights IA</h3>
+            {aiLoading && <Loader2 className="w-4 h-4 animate-spin text-gold ml-2" />}
+          </div>
+          {aiMessages.filter(m => m.role === "assistant").map((m, i) => (
+            <pre key={i} className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">{m.content}</pre>
+          ))}
+        </div>
+      )}
 
       <Tabs defaultValue="financial">
         <TabsList className="bg-secondary flex-wrap">

@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState, emptyStates } from "@/components/EmptyState";
 import { TableSkeleton } from "@/components/SkeletonLoaders";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 
 const statusConfig: Record<string, { label: string; icon: any; class: string }> = {
   draft: { label: "Rascunho", icon: Clock, class: "bg-secondary text-muted-foreground" },
@@ -24,18 +25,21 @@ const Contracts = () => {
   const { toast } = useToast();
   const [contracts, setContracts] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: "", client_id: "", content_html: "", status: "draft" });
 
   const fetchAll = async () => {
     setLoading(true);
-    const [cRes, clRes] = await Promise.all([
+    const [cRes, clRes, pRes] = await Promise.all([
       supabase.from("contracts").select("*, client_accounts(name)").order("created_at", { ascending: false }),
       supabase.from("client_accounts").select("id, name"),
+      supabase.from("proposals").select("id, title, client_id, total_value, description, items").eq("status", "approved"),
     ]);
     setContracts(cRes.data || []);
     setClients(clRes.data || []);
+    setProposals(pRes.data || []);
     setLoading(false);
   };
 
@@ -57,6 +61,27 @@ const Contracts = () => {
     fetchAll();
   };
 
+  const handleApplyContract = async (content: string) => {
+    if (!form.client_id || !profile?.company_id) {
+      toast({ title: "Selecione um cliente primeiro", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("contracts").insert({
+      company_id: profile.company_id,
+      title: `Contrato - ${clients.find(c => c.id === form.client_id)?.name || "Cliente"}`,
+      client_id: form.client_id,
+      content_html: content,
+      status: "draft",
+    });
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Contrato gerado com IA e salvo como rascunho" });
+    fetchAll();
+  };
+
+  const contractContext = proposals.length > 0
+    ? `Propostas aprovadas disponíveis:\n${proposals.map(p => `- ${p.title}: R$ ${p.total_value || 0} (${p.description || ""})`).join("\n")}`
+    : "Nenhuma proposta aprovada disponível.";
+
   return (
     <div className="p-8 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -64,25 +89,46 @@ const Contracts = () => {
           <h1 className="text-3xl font-heading font-bold text-foreground">Contratos</h1>
           <p className="text-muted-foreground mt-1">Gerencie contratos e assinaturas</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="gold"><Plus className="w-4 h-4 mr-1" /> Novo Contrato</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Novo Contrato</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div><Label>Título *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-              <div><Label>Cliente *</Label>
-                <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+        <div className="flex items-center gap-2">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="gold"><Plus className="w-4 h-4 mr-1" /> Novo Contrato</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Novo Contrato</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div><Label>Título *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                <div><Label>Cliente *</Label>
+                  <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Conteúdo</Label><Textarea rows={4} value={form.content_html} onChange={(e) => setForm({ ...form, content_html: e.target.value })} placeholder="Termos do contrato..." /></div>
+                <Button variant="gold" className="w-full" onClick={createContract}>Criar Contrato</Button>
               </div>
-              <div><Label>Conteúdo</Label><Textarea rows={4} value={form.content_html} onChange={(e) => setForm({ ...form, content_html: e.target.value })} placeholder="Termos do contrato..." /></div>
-              <Button variant="gold" className="w-full" onClick={createContract}>Criar Contrato</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* AI Contract Generator */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="w-[200px]">
+          <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+            <SelectTrigger><SelectValue placeholder="Cliente para IA" /></SelectTrigger>
+            <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <AIAssistantPanel
+          contextType="global"
+          title="Gerar Contrato com IA"
+          placeholder="Descreva o tipo de contrato desejado..."
+          initialPrompt="Gere um contrato de prestação de serviços de consultoria completo com cláusulas padrão (objeto, prazo, valor, confidencialidade, rescisão, foro)."
+          extraContext={contractContext}
+          onApplyResult={handleApplyContract}
+          applyLabel="Salvar Contrato"
+        />
       </div>
 
       {/* Stats */}

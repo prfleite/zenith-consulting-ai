@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState, emptyStates } from "@/components/EmptyState";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
-import { Search, Plus, Building2, Download, FileDown } from "lucide-react";
+import { Search, Plus, Building2, Download, FileDown, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +43,18 @@ const Clients = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = () => setSelected(prev => prev.size === paginated.length ? new Set() : new Set(paginated.map(c => c.id)));
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    for (const id of selected) { await supabase.from("client_accounts").delete().eq("id", id); }
+    toast({ title: `${selected.size} clientes excluídos` });
+    setSelected(new Set());
+    fetchClients();
+  };
 
   const fetchClients = async () => {
     const { data } = await supabase
@@ -126,24 +138,31 @@ const Clients = () => {
           <Input placeholder="Buscar por nome, segmento ou indústria..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-card border-border" />
         </div>
         <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+        {selected.size > 0 && (
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-1" /> Excluir ({selected.size})</Button>
+        )}
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Checkbox checked={selected.size === paginated.length && paginated.length > 0} onCheckedChange={toggleAll} />
+            <span className="text-xs text-muted-foreground">Selecionar todos</span>
+          </div>
           {paginated.map((client) => (
             <div
               key={client.id}
-              onClick={() => navigate(`/clients/${client.id}`)}
               className="bg-card rounded-xl p-5 border border-border cursor-pointer transition-all duration-200 hover:border-gold-subtle hover:shadow-gold"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-lg bg-secondary flex items-center justify-center">
+                  <Checkbox checked={selected.has(client.id)} onCheckedChange={() => toggleSelect(client.id)} onClick={(e) => e.stopPropagation()} />
+                  <div className="w-11 h-11 rounded-lg bg-secondary flex items-center justify-center" onClick={() => navigate(`/clients/${client.id}`)}>
                     <Building2 className="w-5 h-5 text-muted-foreground" />
                   </div>
-                  <div>
+                  <div onClick={() => navigate(`/clients/${client.id}`)}>
                     <h3 className="font-semibold text-foreground">{client.name}</h3>
                     <p className="text-sm text-muted-foreground">{client.industry || client.segment} · {client.country}</p>
                   </div>

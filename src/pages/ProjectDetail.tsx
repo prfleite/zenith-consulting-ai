@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Plus, GripVertical, Clock, CheckCircle2, AlertCircle, MoreHorizontal, Users, FileText, Star } from "lucide-react";
+import { ArrowLeft, Plus, GripVertical, Clock, CheckCircle2, AlertCircle, MoreHorizontal, Users, FileText, Star, Brain } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { usePresence } from "@/hooks/usePresence";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import type { Tables } from "@/integrations/supabase/types";
 
 const statusConfig: Record<string, { label: string; class: string }> = {
@@ -57,6 +59,8 @@ const ProjectDetail = () => {
   const [docDialogOpen, setDocDialogOpen] = useState(false);
   const [npsDialogOpen, setNpsDialogOpen] = useState(false);
   const [dragTask, setDragTask] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "medium", assignee_id: "", due_date: "", effort_hours_estimated: "", is_milestone: false });
   const [memberForm, setMemberForm] = useState({ user_id: "", role: "consultant" });
@@ -137,6 +141,38 @@ const ProjectDetail = () => {
     fetchAll();
   };
 
+  // AI plan apply handler
+  const handleApplyAIPlan = async (content: string) => {
+    if (!id) return;
+    setAiGenerating(true);
+    try {
+      // Try to parse tasks from AI response (look for lines with task patterns)
+      const lines = content.split("\n").filter((l) => l.trim().startsWith("-") || l.trim().match(/^\d+\./));
+      let created = 0;
+      for (const line of lines.slice(0, 20)) {
+        const title = line.replace(/^[-\d.)\s]+/, "").replace(/\*\*/g, "").trim();
+        if (title.length < 3 || title.length > 200) continue;
+        // Extract hours if pattern like "(Xh)" or "X horas"
+        const hoursMatch = title.match(/\((\d+)h?\)/i) || title.match(/(\d+)\s*horas?/i);
+        const hours = hoursMatch ? Number(hoursMatch[1]) : null;
+        const cleanTitle = title.replace(/\(\d+h?\)/i, "").replace(/\d+\s*horas?/i, "").trim();
+        if (cleanTitle.length < 3) continue;
+        await supabase.from("project_tasks").insert({
+          project_id: id,
+          title: cleanTitle.slice(0, 100),
+          effort_hours_estimated: hours,
+          priority: "medium" as any,
+        });
+        created++;
+      }
+      toast({ title: `${created} tarefas criadas a partir do plano IA` });
+      fetchAll();
+    } catch {
+      toast({ title: "Erro ao aplicar plano", variant: "destructive" });
+    }
+    setAiGenerating(false);
+  };
+
   if (!project) return <div className="p-8 text-muted-foreground">Carregando...</div>;
 
   const sc = statusConfig[project.status] || statusConfig.planning;
@@ -147,6 +183,8 @@ const ProjectDetail = () => {
   const billableHours = timeEntries.filter((e: any) => e.billable).reduce((s: number, e: any) => s + Number(e.hours), 0);
   const hoursUsedPct = project.budget_hours ? Math.round((totalHours / Number(project.budget_hours)) * 100) : 0;
   const avgNps = nps.length ? (nps.reduce((s, n) => s + n.score, 0) / nps.length).toFixed(1) : "—";
+
+  const projectContext = `Projeto: ${project.name}\nCliente: ${(project.client_accounts as any)?.name}\nStatus: ${project.status}\nOrçamento: R$ ${project.budget_fee || 0}\nHoras Budget: ${project.budget_hours || "N/A"}\nTarefas existentes: ${tasks.map((t) => `${t.title} (${t.status})`).join(", ") || "Nenhuma"}`;
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
@@ -200,52 +238,65 @@ const ProjectDetail = () => {
           <TabsTrigger value="hours">Horas ({timeEntries.length})</TabsTrigger>
           <TabsTrigger value="docs">Documentos ({documents.length})</TabsTrigger>
           <TabsTrigger value="nps">NPS ({nps.length})</TabsTrigger>
+          <TabsTrigger value="activity">Atividades</TabsTrigger>
         </TabsList>
 
         {/* Tasks Kanban */}
         <TabsContent value="tasks" className="space-y-4">
-          <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-            <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Tarefa</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div><Label>Título *</Label><Input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} /></div>
-                <div><Label>Descrição</Label><Textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Prioridade</Label>
-                    <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Baixa</SelectItem><SelectItem value="medium">Média</SelectItem>
-                        <SelectItem value="high">Alta</SelectItem><SelectItem value="critical">Crítica</SelectItem>
-                      </SelectContent>
-                    </Select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
+              <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Tarefa</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>Título *</Label><Input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} /></div>
+                  <div><Label>Descrição</Label><Textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Prioridade</Label>
+                      <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Baixa</SelectItem><SelectItem value="medium">Média</SelectItem>
+                          <SelectItem value="high">Alta</SelectItem><SelectItem value="critical">Crítica</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Responsável</Label>
+                      <Select value={taskForm.assignee_id} onValueChange={(v) => setTaskForm({ ...taskForm, assignee_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{staffProfiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div><Label>Responsável</Label>
-                    <Select value={taskForm.assignee_id} onValueChange={(v) => setTaskForm({ ...taskForm, assignee_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>{staffProfiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Prazo</Label><Input type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} /></div>
+                    <div><Label>Horas Estimadas</Label><Input type="number" value={taskForm.effort_hours_estimated} onChange={(e) => setTaskForm({ ...taskForm, effort_hours_estimated: e.target.value })} /></div>
                   </div>
+                  <div className="flex items-center gap-2"><Switch checked={taskForm.is_milestone} onCheckedChange={(v) => setTaskForm({ ...taskForm, is_milestone: v })} /><Label>Milestone</Label></div>
+                  <Button variant="gold" className="w-full" onClick={addTask}>Criar Tarefa</Button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Prazo</Label><Input type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} /></div>
-                  <div><Label>Horas Estimadas</Label><Input type="number" value={taskForm.effort_hours_estimated} onChange={(e) => setTaskForm({ ...taskForm, effort_hours_estimated: e.target.value })} /></div>
-                </div>
-                <div className="flex items-center gap-2"><Switch checked={taskForm.is_milestone} onCheckedChange={(v) => setTaskForm({ ...taskForm, is_milestone: v })} /><Label>Milestone</Label></div>
-                <Button variant="gold" className="w-full" onClick={addTask}>Criar Tarefa</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+            <AIAssistantPanel
+              contextType="planning"
+              contextId={id}
+              title="Gerar Plano com IA"
+              placeholder="Descreva o que o projeto precisa entregar..."
+              extraContext={projectContext}
+              onApplyResult={handleApplyAIPlan}
+              applyLabel={aiGenerating ? "Aplicando..." : "Criar Tarefas"}
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {taskCols.map((col) => {
               const colTasks = tasks.filter((t) => t.status === col.key);
               return (
                 <div key={col.key}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); if (dragTask) moveTask(dragTask, col.key); setDragTask(null); }}
-                  className="space-y-3 min-h-[200px]">
+                  onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.key); }}
+                  onDragLeave={() => setDragOverCol(null)}
+                  onDrop={(e) => { e.preventDefault(); if (dragTask) moveTask(dragTask, col.key); setDragTask(null); setDragOverCol(null); }}
+                  className={`space-y-3 min-h-[200px] rounded-lg p-2 transition-colors ${dragOverCol === col.key ? "bg-gold/5 ring-1 ring-gold/30" : ""}`}>
                   <div className="flex items-center gap-2 px-1">
                     <col.icon className={`w-4 h-4 ${col.color}`} />
                     <span className="text-sm font-medium text-foreground">{col.label}</span>
@@ -255,7 +306,7 @@ const ProjectDetail = () => {
                     const assignee = staffProfiles.find((p) => p.id === task.assignee_id);
                     return (
                       <div key={task.id} draggable onDragStart={() => setDragTask(task.id)}
-                        className="bg-card rounded-lg p-3 border border-border hover:border-gold-subtle cursor-grab active:cursor-grabbing transition-all">
+                        className={`bg-card rounded-lg p-3 border border-border hover:border-gold-subtle cursor-grab active:cursor-grabbing transition-all ${dragTask === task.id ? "opacity-50 scale-95" : ""}`}>
                         <div className="flex items-start justify-between">
                           <h5 className="text-sm font-medium text-foreground">{task.is_milestone ? "🏁 " : ""}{task.title}</h5>
                         </div>
@@ -264,6 +315,7 @@ const ProjectDetail = () => {
                           {assignee && <span className="text-xs text-muted-foreground">{assignee.name}</span>}
                           {task.due_date && <span className="text-xs text-muted-foreground ml-auto">{task.due_date}</span>}
                         </div>
+                        {task.effort_hours_estimated && <span className="text-xs text-muted-foreground mt-1 block">{task.effort_hours_estimated}h estimadas</span>}
                       </div>
                     );
                   })}
@@ -401,6 +453,14 @@ const ProjectDetail = () => {
                 <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleDateString("pt-BR")}</span>
               </div>
             ))}
+          </div>
+        </TabsContent>
+
+        {/* Activity Feed */}
+        <TabsContent value="activity">
+          <div className="bg-card rounded-xl p-6 border border-border">
+            <h3 className="font-heading font-semibold text-foreground mb-4">Histórico de Atividades</h3>
+            <ActivityFeed entityType="project" entityId={id} />
           </div>
         </TabsContent>
       </Tabs>

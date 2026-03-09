@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Plus, Check, X, Trash2 } from "lucide-react";
+import { Plus, Check, X, Trash2, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { exportToCSV } from "@/lib/exportUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +30,19 @@ const Expenses = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const handleBulkDelete = async () => {
+    for (const id of selected) { await supabase.from("expenses").delete().eq("id", id); }
+    toast({ title: `${selected.size} despesas excluídas` });
+    setSelected(new Set());
+    fetchExpenses();
+  };
+  const handleBulkExport = () => {
+    const items = filteredExpenses.filter(e => selected.has(e.id));
+    exportToCSV(items.map(e => ({ Data: e.date, Projeto: e.projects?.name || "—", Valor: e.amount, Categoria: e.category, Status: e.approval_status })), "despesas-selecionadas");
+  };
 
   const fetchExpenses = async () => {
     if (!user) return;
@@ -131,13 +146,22 @@ const Expenses = () => {
               <p className="text-lg font-bold text-foreground">R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
             </div>
             <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+            {selected.size > 0 && (
+              <>
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-1" /> Excluir ({selected.size})</Button>
+                <Button variant="gold-outline" size="sm" onClick={handleBulkExport}><Download className="w-4 h-4 mr-1" /> Exportar ({selected.size})</Button>
+              </>
+            )}
           </div>
           <div className="space-y-2">
             {paginatedExpenses.map((e: any) => (
               <div key={e.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{e.projects?.name}</p>
-                  <p className="text-xs text-muted-foreground">{e.date} · {e.category}{e.description ? ` · ${e.description}` : ""}</p>
+                <div className="flex items-center gap-3">
+                  <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggleSelect(e.id)} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{e.projects?.name}</p>
+                    <p className="text-xs text-muted-foreground">{e.date} · {e.category}{e.description ? ` · ${e.description}` : ""}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">

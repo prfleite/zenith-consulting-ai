@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Search, Filter, Download, FileDown } from "lucide-react";
+import { Plus, Search, Filter, Download, FileDown, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,15 @@ const Billing = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const handleBulkPaid = async () => {
+    for (const id of selected) { await supabase.from("invoices").update({ status: "paid" as any }).eq("id", id); }
+    toast({ title: `${selected.size} faturas marcadas como pagas` });
+    setSelected(new Set());
+    fetchInvoices();
+  };
 
   const fetchInvoices = async () => {
     const { data } = await supabase.from("invoices").select("*, client_accounts(name), projects(name)")
@@ -204,6 +214,9 @@ const Billing = () => {
           </SelectContent>
         </Select>
         <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+        {selected.size > 0 && (
+          <Button variant="gold" size="sm" onClick={handleBulkPaid}><CheckCircle2 className="w-4 h-4 mr-1" /> Marcar Pagas ({selected.size})</Button>
+        )}
       </div>
 
       {/* Invoice List */}
@@ -213,6 +226,8 @@ const Billing = () => {
           const next = nextStatus[inv.status];
           return (
             <div key={inv.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between hover:border-gold-subtle transition-colors">
+              <div className="flex items-center gap-3">
+                <Checkbox checked={selected.has(inv.id)} onCheckedChange={() => toggleSelect(inv.id)} />
               <div>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-foreground">{inv.number}</p>
@@ -220,6 +235,7 @@ const Billing = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">{inv.client_accounts?.name}{inv.projects?.name ? ` · ${inv.projects.name}` : ""}</p>
                 <p className="text-xs text-muted-foreground">{inv.issue_date}{inv.due_date ? ` → ${inv.due_date}` : ""}</p>
+              </div>
               </div>
               <div className="flex items-center gap-3">
                 <p className="text-sm font-bold text-foreground">R$ {Number(inv.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>

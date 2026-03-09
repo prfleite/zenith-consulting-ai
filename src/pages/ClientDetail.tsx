@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
+import { ActivityFeed } from "@/components/ActivityFeed";
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,10 +19,10 @@ const ClientDetail = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [nps, setNps] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
 
-  // Contact form
   const [showContactForm, setShowContactForm] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
   const [contactForm, setContactForm] = useState({ name: "", role_title: "", email: "", phone: "", is_primary: false });
@@ -28,13 +30,14 @@ const ClientDetail = () => {
 
   const loadData = async () => {
     if (!id) return;
-    const [clientRes, contactsRes, oppsRes, projRes, docsRes, npsRes] = await Promise.all([
+    const [clientRes, contactsRes, oppsRes, projRes, docsRes, npsRes, invRes] = await Promise.all([
       supabase.from("client_accounts").select("*, owner:profiles!client_accounts_owner_id_fkey(name)").eq("id", id).single(),
       supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false }),
       supabase.from("opportunities").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
       supabase.from("projects").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
       supabase.from("documents").select("*").eq("related_client_account_id", id).order("created_at", { ascending: false }),
       supabase.from("nps_surveys").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
+      supabase.from("invoices").select("*").eq("client_account_id", id),
     ]);
     if (clientRes.data) setClient(clientRes.data);
     if (contactsRes.data) setContacts(contactsRes.data);
@@ -42,6 +45,7 @@ const ClientDetail = () => {
     if (projRes.data) setProjects(projRes.data);
     if (docsRes.data) setDocuments(docsRes.data);
     if (npsRes.data) setNps(npsRes.data);
+    if (invRes.data) setInvoices(invRes.data);
     setLoading(false);
   };
 
@@ -64,29 +68,21 @@ const ClientDetail = () => {
     setSavingContact(true);
     if (editingContact) {
       const { error } = await supabase.from("client_contacts").update({
-        name: contactForm.name,
-        role_title: contactForm.role_title || null,
-        email: contactForm.email || null,
-        phone: contactForm.phone || null,
-        is_primary: contactForm.is_primary,
+        name: contactForm.name, role_title: contactForm.role_title || null,
+        email: contactForm.email || null, phone: contactForm.phone || null, is_primary: contactForm.is_primary,
       }).eq("id", editingContact.id);
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); }
       else { toast({ title: "Contato atualizado!" }); }
     } else {
       const { error } = await supabase.from("client_contacts").insert({
-        client_account_id: id,
-        name: contactForm.name,
-        role_title: contactForm.role_title || null,
-        email: contactForm.email || null,
-        phone: contactForm.phone || null,
-        is_primary: contactForm.is_primary,
+        client_account_id: id, name: contactForm.name, role_title: contactForm.role_title || null,
+        email: contactForm.email || null, phone: contactForm.phone || null, is_primary: contactForm.is_primary,
       });
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); }
       else { toast({ title: "Contato criado!" }); }
     }
     setSavingContact(false);
     setShowContactForm(false);
-    // Reload contacts
     const { data } = await supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false });
     if (data) setContacts(data);
   };
@@ -108,13 +104,17 @@ const ClientDetail = () => {
     { key: "projects", label: `Projetos (${projects.length})` },
     { key: "documents", label: `Documentos (${documents.length})` },
     { key: "nps", label: `NPS (${nps.length})` },
+    { key: "activity", label: "Atividades" },
   ];
 
   const healthColor = (client.health_score || 0) >= 80 ? "text-success" : (client.health_score || 0) >= 60 ? "text-warning" : "text-destructive";
   const avgNps = nps.length ? (nps.reduce((a: number, n: any) => a + n.score, 0) / nps.length).toFixed(1) : "—";
+  const totalRevenue = invoices.filter((i: any) => i.status === "paid").reduce((s: number, i: any) => s + Number(i.amount), 0);
 
   const stageLabels: Record<string, string> = { lead: "Lead", qualified: "Qualificado", proposal: "Proposta", negotiation: "Negociação", won: "Ganho", lost: "Perdido" };
   const statusLabels: Record<string, string> = { planning: "Planejamento", active: "Ativo", on_hold: "Em Espera", completed: "Concluído", cancelled: "Cancelado" };
+
+  const clientContext = `Cliente: ${client.name}\nSegmento: ${client.segment || "N/A"}\nIndústria: ${client.industry || "N/A"}\nHealth Score: ${client.health_score || "N/A"}\nReceita Anual: R$ ${client.annual_revenue || 0}\nNPS Médio: ${avgNps}\nOportunidades: ${opportunities.length} (${opportunities.filter(o => o.stage === "won").length} ganhas)\nProjetos: ${projects.length} (${projects.filter(p => p.status === "active").length} ativos)\nReceita Recebida: R$ ${totalRevenue.toLocaleString("pt-BR")}`;
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
@@ -137,6 +137,16 @@ const ClientDetail = () => {
           <p className="text-xs">Health Score</p>
         </div>
       </div>
+
+      {/* AI Summary */}
+      <AIAssistantPanel
+        contextType="global"
+        contextId={id}
+        title="Resumo Executivo IA"
+        placeholder="Analise a saúde do relacionamento com este cliente..."
+        initialPrompt="Gere um resumo executivo deste cliente incluindo: análise de saúde do relacionamento, riscos identificados, oportunidades de upsell e próximas ações recomendadas."
+        extraContext={clientContext}
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border overflow-x-auto">
@@ -174,7 +184,7 @@ const ClientDetail = () => {
                 ["Oportunidades", opportunities.length],
                 ["Projetos", projects.length],
                 ["NPS Médio", avgNps],
-                ["Documentos", documents.length],
+                ["Receita", `R$ ${(totalRevenue / 1000).toFixed(0)}K`],
               ].map(([label, value]) => (
                 <div key={label as string} className="bg-secondary rounded-lg p-4 text-center">
                   <p className="text-2xl font-bold text-foreground">{value}</p>
@@ -275,6 +285,13 @@ const ClientDetail = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {activeTab === "activity" && (
+        <div className="bg-card rounded-xl p-6 border border-border">
+          <h3 className="font-heading font-semibold text-foreground mb-4">Histórico de Atividades</h3>
+          <ActivityFeed entityType="client" entityId={id} />
         </div>
       )}
 
