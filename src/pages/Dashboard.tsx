@@ -354,4 +354,84 @@ const Dashboard = () => {
   );
 };
 
+
+// Project Health Widget component
+const ProjectHealthWidget = () => {
+  const [projects, setProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data: allProjects } = await supabase
+        .from("projects")
+        .select("id, name, status, budget_fee, budget_hours, start_date, end_date_planned, client_accounts(name)")
+        .in("status", ["active", "planning"]);
+
+      if (!allProjects?.length) return;
+
+      const projectIds = allProjects.map(p => p.id);
+      const [{ data: tasks }, { data: timeEntries }] = await Promise.all([
+        supabase.from("project_tasks").select("project_id, status").in("project_id", projectIds),
+        supabase.from("time_entries" as any).select("project_id, hours").in("project_id", projectIds),
+      ]);
+
+      const scored = allProjects.map(p => {
+        const pTasks = (tasks || []).filter((t: any) => t.project_id === p.id);
+        const doneTasks = pTasks.filter((t: any) => t.status === "done").length;
+        const taskPct = pTasks.length > 0 ? doneTasks / pTasks.length : 0;
+
+        const hoursUsed = ((timeEntries || []) as any[]).filter(t => t.project_id === p.id).reduce((s: number, t: any) => s + Number(t.hours || 0), 0);
+        const budgetPct = p.budget_hours ? hoursUsed / Number(p.budget_hours) : 0;
+
+        const now = new Date();
+        const end = p.end_date_planned ? new Date(p.end_date_planned) : null;
+        const start = p.start_date ? new Date(p.start_date) : null;
+        let timePct = 0;
+        if (start && end) {
+          const total = end.getTime() - start.getTime();
+          const elapsed = now.getTime() - start.getTime();
+          timePct = total > 0 ? elapsed / total : 0;
+        }
+
+        // Risk score: higher = worse
+        let risk = 0;
+        if (budgetPct > 0.8 && taskPct < 0.5) risk += 40;
+        if (budgetPct > taskPct + 0.3) risk += 30;
+        if (timePct > 0.8 && taskPct < 0.6) risk += 30;
+        if (end && now > end && taskPct < 1) risk += 25;
+
+        return { ...p, risk, taskPct: Math.round(taskPct * 100), budgetPct: Math.round(budgetPct * 100), hoursUsed };
+      });
+
+      setProjects(scored.filter(p => p.risk > 20).sort((a, b) => b.risk - a.risk).slice(0, 3));
+    };
+    fetch();
+  }, []);
+
+  if (!projects.length) return null;
+
+  return (
+    <div className="bg-card rounded-xl p-6 border border-destructive/30 shadow-card">
+      <div className="flex items-center gap-2 mb-4">
+        <AlertTriangle className="w-5 h-5 text-destructive" />
+        <h3 className="text-lg font-heading font-semibold text-foreground">Projetos em Risco</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {projects.map((p: any) => (
+          <Link key={p.id} to={`/projects/${p.id}`} className="bg-secondary rounded-lg p-4 hover:bg-secondary/80 transition-colors border border-destructive/20">
+            <p className="text-sm font-medium text-foreground">{p.name}</p>
+            <p className="text-xs text-muted-foreground mb-2">{p.client_accounts?.name}</p>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between"><span className="text-muted-foreground">Tasks concluídas</span><span className={p.taskPct < 50 ? "text-destructive" : "text-foreground"}>{p.taskPct}%</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Budget consumido</span><span className={p.budgetPct > 80 ? "text-destructive" : "text-foreground"}>{p.budgetPct}%</span></div>
+              <div className="w-full h-1.5 bg-muted rounded-full mt-1">
+                <div className="h-full rounded-full bg-destructive" style={{ width: `${Math.min(p.risk, 100)}%` }} />
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default Dashboard;
