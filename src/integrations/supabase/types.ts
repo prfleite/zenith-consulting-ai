@@ -284,6 +284,69 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          end_date: string
+          event_type: string | null
+          id: string
+          is_all_day: boolean | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          start_date: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          end_date: string
+          event_type?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          start_date: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          event_type?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          start_date?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_accounts: {
         Row: {
           annual_revenue: number | null
@@ -436,6 +499,64 @@ export type Database = {
           },
         ]
       }
+      client_surveys: {
+        Row: {
+          client_id: string
+          comment: string | null
+          company_id: string
+          created_at: string
+          id: string
+          project_id: string | null
+          responded_by_name: string | null
+          score: number
+          survey_type: string | null
+        }
+        Insert: {
+          client_id: string
+          comment?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          responded_by_name?: string | null
+          score: number
+          survey_type?: string | null
+        }
+        Update: {
+          client_id?: string
+          comment?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          responded_by_name?: string | null
+          score?: number
+          survey_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_surveys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_surveys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_surveys_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_website_analyses: {
         Row: {
           ai_provider_used: string | null
@@ -570,6 +691,70 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          client_id: string
+          company_id: string
+          content_html: string | null
+          created_at: string
+          id: string
+          proposal_id: string | null
+          signed_at: string | null
+          signed_by: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          company_id: string
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          proposal_id?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          company_id?: string
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          proposal_id?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
@@ -733,6 +918,7 @@ export type Database = {
           amount: number
           client_account_id: string
           company_id: string
+          conversion_rate: number | null
           created_at: string
           currency: string | null
           due_date: string | null
@@ -748,6 +934,7 @@ export type Database = {
           amount?: number
           client_account_id: string
           company_id: string
+          conversion_rate?: number | null
           created_at?: string
           currency?: string | null
           due_date?: string | null
@@ -763,6 +950,7 @@ export type Database = {
           amount?: number
           client_account_id?: string
           company_id?: string
+          conversion_rate?: number | null
           created_at?: string
           currency?: string | null
           due_date?: string | null
@@ -1095,6 +1283,7 @@ export type Database = {
           client_account_id: string
           close_date: string | null
           company_id: string
+          conversion_rate: number | null
           created_at: string
           currency: string | null
           description: string | null
@@ -1112,6 +1301,7 @@ export type Database = {
           client_account_id: string
           close_date?: string | null
           company_id: string
+          conversion_rate?: number | null
           created_at?: string
           currency?: string | null
           description?: string | null
@@ -1129,6 +1319,7 @@ export type Database = {
           client_account_id?: string
           close_date?: string | null
           company_id?: string
+          conversion_rate?: number | null
           created_at?: string
           currency?: string | null
           description?: string | null
@@ -1309,6 +1500,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          onboarding_completed: boolean | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
@@ -1320,6 +1512,7 @@ export type Database = {
           email?: string
           id: string
           name?: string
+          onboarding_completed?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
@@ -1331,6 +1524,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          onboarding_completed?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
@@ -1466,6 +1660,7 @@ export type Database = {
           client_account_id: string
           code: string | null
           company_id: string
+          conversion_rate: number | null
           created_at: string
           currency: string | null
           description: string | null
@@ -1486,6 +1681,7 @@ export type Database = {
           client_account_id: string
           code?: string | null
           company_id: string
+          conversion_rate?: number | null
           created_at?: string
           currency?: string | null
           description?: string | null
@@ -1506,6 +1702,7 @@ export type Database = {
           client_account_id?: string
           code?: string | null
           company_id?: string
+          conversion_rate?: number | null
           created_at?: string
           currency?: string | null
           description?: string | null
@@ -1547,6 +1744,82 @@ export type Database = {
             columns: ["project_manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          client_id: string
+          company_id: string
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          items: Json | null
+          opportunity_id: string | null
+          signed_at: string | null
+          signed_by: string | null
+          status: string | null
+          title: string
+          total_value: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          client_id: string
+          company_id: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          items?: Json | null
+          opportunity_id?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string | null
+          title: string
+          total_value?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          items?: Json | null
+          opportunity_id?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string | null
+          title?: string
+          total_value?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
         ]
@@ -1815,6 +2088,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      webhooks: {
+        Row: {
+          company_id: string
+          created_at: string
+          events: string[] | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          name: string
+          secret_key: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          events?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          secret_key?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          events?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          secret_key?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
