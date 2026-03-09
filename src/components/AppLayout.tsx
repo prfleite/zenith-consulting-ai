@@ -81,6 +81,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground" title={theme === "dark" ? "Modo claro" : "Modo escuro"}>
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           <button onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-sm hover:text-foreground transition-colors">
             <Search className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Buscar...</span>
