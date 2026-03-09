@@ -214,6 +214,9 @@ const Billing = () => {
           </SelectContent>
         </Select>
         <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+        {selected.size > 0 && (
+          <Button variant="gold" size="sm" onClick={handleBulkPaid}><CheckCircle2 className="w-4 h-4 mr-1" /> Marcar Pagas ({selected.size})</Button>
+        )}
       </div>
 
       {/* Invoice List */}
