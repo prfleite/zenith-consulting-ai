@@ -166,7 +166,23 @@ export default function ProjectDetail() {
             {project.code && <p className="text-sm text-muted-foreground">{project.code}</p>}
             <p className="text-sm text-muted-foreground mt-1">Cliente: {(project.client_accounts as any)?.name} · PM: {(project.manager as any)?.name || "—"}</p>
           </div>
-        </div>
+          {onlineUsers.length > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground mr-1">Online:</span>
+              {onlineUsers.map((u) => (
+                <Tooltip key={u.userId}>
+                  <TooltipTrigger>
+                    <Avatar className="w-7 h-7 border-2 border-success">
+                      <AvatarFallback className="text-[10px] bg-success/20 text-success font-semibold">
+                        {u.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>{u.name} está visualizando</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div><span className="text-xs text-muted-foreground">Progresso</span><div className="text-lg font-bold text-foreground">{pct}%</div><div className="w-full h-1.5 bg-secondary rounded-full mt-1"><div className="h-full bg-gradient-gold rounded-full" style={{ width: `${pct}%` }} /></div></div>
           <div><span className="text-xs text-muted-foreground">Horas</span><div className="text-lg font-bold text-foreground">{totalHours}h / {project.budget_hours || "∞"}h</div><div className="text-xs text-muted-foreground">{hoursUsedPct}% utilizado</div></div>
