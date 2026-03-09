@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
-export default function SettingsPage() {
+const SettingsPage = () => {
   const { profile } = useAuth();
   const [company, setCompany] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);

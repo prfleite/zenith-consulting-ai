@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAIChat } from "@/lib/ai/useAIChat";
 import { supabase } from "@/integrations/supabase/client";
 
-export default function AIInsights() {
+const AIInsights = () => {
   const { messages, isLoading, sendMessage } = useAIChat({ contextType: "global" });
   const [input, setInput] = useState("");
   const [kpis, setKpis] = useState("");

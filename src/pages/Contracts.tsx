@@ -19,7 +19,7 @@ const statusConfig: Record<string, { label: string; icon: any; class: string }> 
   expired: { label: "Expirado", icon: XCircle, class: "bg-destructive/20 text-destructive" },
 };
 
-export default function Contracts() {
+const Contracts = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [contracts, setContracts] = useState<any[]>([]);

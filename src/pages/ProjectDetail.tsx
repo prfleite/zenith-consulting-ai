@@ -40,7 +40,7 @@ const priorityColors: Record<string, string> = {
   critical: "bg-destructive text-destructive-foreground",
 };
 
-export default function ProjectDetail() {
+const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const { toast } = useToast();

@@ -761,7 +761,7 @@ function InboxTab({ companyId }: { companyId: string }) {
 }
 
 // ===== MAIN PAGE =====
-export default function Marketing() {
+const Marketing = () => {
   const { profile } = useAuth();
   const companyId = profile?.company_id || "";
 

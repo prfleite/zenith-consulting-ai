@@ -16,7 +16,7 @@ import { useAIChat } from "@/lib/ai/useAIChat";
 
 const CATEGORIES = ["Processos Internos", "Templates", "Playbooks", "Estudos de Caso", "Onboarding", "FAQs"];
 
-export default function Knowledge() {
+const Knowledge = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

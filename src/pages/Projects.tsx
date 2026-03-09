@@ -38,7 +38,7 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   cancelled: { label: "Cancelado", class: "bg-destructive/20 text-destructive" },
 };
 
-export default function Projects() {
+const Projects = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [projects, setProjects] = useState<ProjectRow[]>([]);

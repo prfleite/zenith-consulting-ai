@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const categories = ["Transporte", "Hospedagem", "Alimentação", "Software", "Outros"];
 
-export default function Expenses() {
+const Expenses = () => {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const isManager = profile?.role === "admin" || profile?.role === "manager";
