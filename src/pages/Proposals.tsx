@@ -15,6 +15,7 @@ import { Plus, Sparkles, Eye, FileSignature } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 
 type Proposal = {
   id: string;
