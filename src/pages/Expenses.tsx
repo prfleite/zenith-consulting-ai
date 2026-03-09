@@ -134,6 +134,15 @@ const Expenses = () => {
         </Dialog>
       </div>
 
+      {/* AI Expense Analysis */}
+      <AIAssistantPanel
+        contextType="expense_analysis"
+        title="Analisar Despesas com IA"
+        placeholder="Ex: Quais despesas estão fora do padrão?"
+        initialPrompt="Analise o histórico de despesas e identifique padrões anômalos, sugira otimizações de custos e categorize automaticamente itens sem categoria definida."
+        extraContext={`Total de despesas: R$ ${totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}\nDespesas (últimas 20): ${expenses.slice(0, 20).map((e: any) => `${e.date} ${e.category || "Sem categoria"} R$${e.amount} ${e.projects?.name || ""} ${e.approval_status}`).join("; ")}`}
+      />
+
       <Tabs defaultValue="my">
         <TabsList className="bg-secondary">
           <TabsTrigger value="my">Minhas Despesas</TabsTrigger>
