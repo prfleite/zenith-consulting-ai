@@ -38,6 +38,15 @@ const Billing = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const handleBulkPaid = async () => {
+    for (const id of selected) { await supabase.from("invoices").update({ status: "paid" as any }).eq("id", id); }
+    toast({ title: `${selected.size} faturas marcadas como pagas` });
+    setSelected(new Set());
+    fetchInvoices();
+  };
 
   const fetchInvoices = async () => {
     const { data } = await supabase.from("invoices").select("*, client_accounts(name), projects(name)")
