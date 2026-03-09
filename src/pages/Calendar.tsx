@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Brain } from "lucide-react";
+import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
