@@ -1,10 +1,11 @@
 import { ReactNode, useState, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { GlobalSearch } from "./GlobalSearch";
-import { Bell, AlertTriangle, Info, X, Search, Menu } from "lucide-react";
+import { Bell, AlertTriangle, Info, X, Search, Menu, Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface AppLayoutProps {
   children: ReactNode;
