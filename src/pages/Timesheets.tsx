@@ -115,6 +115,12 @@ const Timesheets = () => {
           <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Timesheets", entries.map(e => ({ Data: e.date, Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "—" })))}>
             <FileDown className="w-4 h-4" /> PDF
           </Button>
+          <AITimesheetSuggest weekDays={weekDays} projects={projects} userId={user?.id} onSuggest={(suggestions) => {
+            suggestions.forEach(s => {
+              supabase.from("time_entries").insert({ user_id: user!.id, project_id: s.project_id, date: s.date, hours: s.hours, billable: true, notes: s.notes }).then(() => {});
+            });
+            setTimeout(fetchEntries, 500);
+          }} />
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Registrar Horas</Button></DialogTrigger>
           <DialogContent>
