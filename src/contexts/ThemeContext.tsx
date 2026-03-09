@@ -1,36 +1,65 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 
-type Theme = "dark" | "light";
+type ThemePreference = "dark" | "light" | "system";
+type ResolvedTheme = "dark" | "light";
 
 type ThemeContextType = {
-  theme: Theme;
-  toggleTheme: () => void;
+  theme: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (t: ThemePreference) => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getSystemTheme(): ResolvedTheme {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyTheme(resolved: ResolvedTheme) {
+  const root = document.documentElement;
+  root.classList.toggle("light", resolved === "light");
+  root.classList.toggle("dark", resolved === "dark");
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
+  const [theme, setThemeState] = useState<ThemePreference>(() => {
     const stored = localStorage.getItem("apex-theme");
-    return (stored === "light" ? "light" : "dark") as Theme;
+    if (stored === "light" || stored === "dark" || stored === "system") return stored;
+    return "dark";
   });
 
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
+    theme === "system" ? getSystemTheme() : theme
+  );
+
+  const setTheme = useCallback((t: ThemePreference) => {
+    setThemeState(t);
+    localStorage.setItem("apex-theme", t);
+  }, []);
+
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "light") {
-      root.classList.add("light");
-      root.classList.remove("dark");
-    } else {
-      root.classList.remove("light");
-      root.classList.add("dark");
+    if (theme !== "system") {
+      setResolvedTheme(theme);
+      applyTheme(theme);
+      return;
     }
-    localStorage.setItem("apex-theme", theme);
+
+    const resolved = getSystemTheme();
+    setResolvedTheme(resolved);
+    applyTheme(resolved);
+
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      const r = e.matches ? "dark" : "light";
+      setResolvedTheme(r);
+      applyTheme(r);
+    };
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

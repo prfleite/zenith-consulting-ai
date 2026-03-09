@@ -1,7 +1,13 @@
 import { ReactNode, useState, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { GlobalSearch } from "./GlobalSearch";
-import { Bell, AlertTriangle, Info, X, Search, Menu, Sun, Moon } from "lucide-react";
+import { Bell, AlertTriangle, Info, X, Search, Menu, Sun, Moon, Monitor } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,7 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     const load = async () => {
@@ -81,9 +87,24 @@ export function AppLayout({ children }: AppLayoutProps) {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground" title={theme === "dark" ? "Modo claro" : "Modo escuro"}>
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground" title="Tema">
+                {resolvedTheme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setTheme("light")} className={theme === "light" ? "bg-accent/20" : ""}>
+                <Sun className="w-4 h-4 mr-2" /> Claro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("dark")} className={theme === "dark" ? "bg-accent/20" : ""}>
+                <Moon className="w-4 h-4 mr-2" /> Escuro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("system")} className={theme === "system" ? "bg-accent/20" : ""}>
+                <Monitor className="w-4 h-4 mr-2" /> Sistema
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-sm hover:text-foreground transition-colors">
             <Search className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Buscar...</span>
