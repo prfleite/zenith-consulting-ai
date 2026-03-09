@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, ChevronLeft, ChevronRight, Check, X, Download, FileDown } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Check, X, Download, FileDown, Brain, Loader2 } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
+import { useAIChat } from "@/lib/ai/useAIChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
