@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAIChat } from "@/lib/ai/useAIChat";
 import { ArrowLeft, Target, Building2, DollarSign, Calendar, Percent, Sparkles, Send, FileText, FolderKanban } from "lucide-react";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

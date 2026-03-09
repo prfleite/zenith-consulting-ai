@@ -39,6 +39,37 @@ export default function Subscription() {
 
   const currentPlanId = subscription?.plan_id;
 
+  const handleUpgrade = async (planId: string, planName: string) => {
+    if (planId === currentPlanId) return;
+    if (!subscription?.id) {
+      toast({ title: "Nenhuma assinatura encontrada", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("company_subscriptions").update({ plan_id: planId, status: "active" }).eq("id", subscription.id);
+    if (error) {
+      toast({ title: "Erro ao atualizar plano", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Plano atualizado para ${planLabels[planName] || planName}!` });
+      setSubscription({ ...subscription, plan_id: planId, status: "active" });
+    }
+  };
+
+  const handleBuyCredits = async (credits: number, label: string) => {
+    if (!subscription?.id) {
+      toast({ title: "Nenhuma assinatura encontrada", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("company_subscriptions").update({
+      ai_credits_balance: creditsBalance + credits,
+    }).eq("id", subscription.id);
+    if (error) {
+      toast({ title: "Erro ao comprar créditos", description: error.message, variant: "destructive" });
+    } else {
+      setCreditsBalance(prev => prev + credits);
+      toast({ title: `${label} adicionados com sucesso!` });
+    }
+  };
+
   const creditPacks = [
     { credits: 1000, price: 10, label: "1.000 créditos" },
     { credits: 5000, price: 45, label: "5.000 créditos", discount: "10% off" },
@@ -100,7 +131,12 @@ export default function Subscription() {
                 ))}
               </ul>
 
-              <Button variant={isCurrent ? "outline" : isPro ? "gold" : "gold-outline"} className="w-full mt-4" disabled={isCurrent}>
+              <Button
+                variant={isCurrent ? "outline" : isPro ? "gold" : "gold-outline"}
+                className="w-full mt-4"
+                disabled={isCurrent}
+                onClick={() => handleUpgrade(plan.id, plan.name)}
+              >
                 {isCurrent ? "Plano Atual" : "Upgrade"}
               </Button>
             </div>
@@ -120,7 +156,7 @@ export default function Subscription() {
               </div>
               <p className="text-2xl font-bold text-foreground">${pack.price}</p>
               <p className="text-xs text-muted-foreground">${(pack.price / pack.credits * 1000).toFixed(2)} por 1.000 créditos</p>
-              <Button variant="gold-outline" size="sm" className="w-full mt-3">Comprar</Button>
+              <Button variant="gold-outline" size="sm" className="w-full mt-3" onClick={() => handleBuyCredits(pack.credits, pack.label)}>Comprar</Button>
             </div>
           ))}
         </div>
