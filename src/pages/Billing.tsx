@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, Download, FileDown } from "lucide-react";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,8 +103,15 @@ export default function Billing() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Faturamento</h1>
           <p className="text-muted-foreground mt-1">Gestão de faturas e receita</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Fatura</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(invoices.map(i => ({ Número: i.number, Status: i.status, Valor: i.amount, Emissão: i.issue_date, Vencimento: i.due_date || "—" })), "faturas")}>
+            <Download className="w-4 h-4" /> CSV
+          </Button>
+          <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Faturas", invoices.map(i => ({ Número: i.number, Status: i.status, "Valor (R$)": Number(i.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 }), Emissão: i.issue_date, Vencimento: i.due_date || "—" })))}>
+            <FileDown className="w-4 h-4" /> PDF
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Fatura</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nova Fatura</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -129,7 +137,8 @@ export default function Billing() {
               <Button variant="gold" className="w-full" onClick={handleCreate}>Criar Fatura</Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Summary Cards */}

@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState, emptyStates } from "@/components/EmptyState";
-import { Search, Plus, Building2 } from "lucide-react";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
+import { Search, Plus, Building2, Download, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,7 +99,15 @@ export default function Clients() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Clientes</h1>
           <p className="text-muted-foreground mt-1">{clients.length} clientes registrados</p>
         </div>
-        <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Novo Cliente</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(clients.map(c => ({ Nome: c.name, Segmento: c.segment, Indústria: c.industry, País: c.country, "Health Score": c.health_score })), "clientes")}>
+            <Download className="w-4 h-4" /> CSV
+          </Button>
+          <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Clientes", clients.map(c => ({ Nome: c.name, Segmento: c.segment || "—", Indústria: c.industry || "—", País: c.country || "—", "Health Score": c.health_score ?? "—" })))}>
+            <FileDown className="w-4 h-4" /> PDF
+          </Button>
+          <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Novo Cliente</Button>
+        </div>
       </div>
 
       <div className="relative max-w-md">
