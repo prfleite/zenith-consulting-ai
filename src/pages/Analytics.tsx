@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, DollarSign, Users, Star, FolderKanban, Megaphone, Brain } from "lucide-react";
+import { BarChart3, DollarSign, Users, Star, FolderKanban, Megaphone, Brain, Loader2, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAIChat } from "@/lib/ai/useAIChat";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ScatterChart, Scatter, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 
