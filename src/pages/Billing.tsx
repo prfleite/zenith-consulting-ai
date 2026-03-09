@@ -165,18 +165,22 @@ const Billing = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         <div className="bg-card rounded-xl p-5 border border-border shadow-card">
           <span className="text-sm text-muted-foreground">Total Faturado</span>
-          <p className="text-2xl font-bold text-foreground">R$ {totalInvoiced.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-foreground">{convertAndFormat(totalInvoiced)}</p>
         </div>
         <div className="bg-card rounded-xl p-5 border border-border shadow-card">
           <span className="text-sm text-muted-foreground">Total Recebido</span>
-          <p className="text-2xl font-bold text-success">R$ {totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-success">{convertAndFormat(totalPaid)}</p>
         </div>
         <div className="bg-card rounded-xl p-5 border border-border shadow-card">
           <span className="text-sm text-muted-foreground">Pendente</span>
-          <p className="text-2xl font-bold text-warning">R$ {totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-warning">{convertAndFormat(totalPending)}</p>
+        </div>
+        <div className="bg-card rounded-xl p-5 border border-border shadow-card flex flex-col items-center justify-center gap-2">
+          <span className="text-sm text-muted-foreground">Moeda</span>
+          <CurrencySelector value={displayCurrency} onChange={setDisplayCurrency} />
         </div>
       </div>
 
