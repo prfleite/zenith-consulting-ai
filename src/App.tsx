@@ -62,6 +62,7 @@ function AppRoutes() {
       <Suspense fallback={<PageSkeleton />}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/install" element={<Install />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
