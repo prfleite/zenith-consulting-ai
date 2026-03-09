@@ -24,6 +24,7 @@ import Resources from "./pages/Resources";
 import Subscription from "./pages/Subscription";
 import Marketing from "./pages/Marketing";
 import Reports from "./pages/Reports";
+import Proposals from "./pages/Proposals";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -82,6 +83,7 @@ function AppRoutes() {
         <Route path="/resources" element={<Resources />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/proposals" element={<Proposals />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/portal" element={<Portal />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
