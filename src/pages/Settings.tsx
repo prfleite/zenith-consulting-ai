@@ -218,12 +218,37 @@ const SettingsPage = () => {
               <Bell className="w-5 h-5 text-gold" />
               <h3 className="font-heading text-lg font-semibold text-foreground">Notificações</h3>
             </div>
-            {["Faturas vencidas", "Projetos em risco", "Alertas de IA", "Briefing executivo semanal", "Novos leads", "NPS baixo"].map(item => (
+            {["Faturas vencidas", "Projetos em risco", "Alertas de IA", "Novos leads", "NPS baixo"].map(item => (
               <div key={item} className="flex items-center justify-between py-2">
                 <span className="text-sm text-foreground">{item}</span>
                 <Switch defaultChecked />
               </div>
             ))}
+          </div>
+          <div className="bg-card rounded-xl p-6 border border-border space-y-4 mt-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Brain className="w-5 h-5 text-gold" />
+              <h3 className="font-heading text-lg font-semibold text-foreground">Relatório Semanal Automático</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Toda segunda-feira às 9h, um relatório com KPIs da semana (novos clientes, horas, faturamento, deals ganhos) é gerado automaticamente e aparece nos seus alertas.
+            </p>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-foreground">Relatório semanal ativo</span>
+              <Switch defaultChecked />
+            </div>
+            <Button variant="gold-outline" size="sm" onClick={async () => {
+              toast({ title: "Gerando relatório..." });
+              try {
+                const { data, error } = await supabase.functions.invoke("send-weekly-report");
+                if (error) throw error;
+                toast({ title: "Relatório gerado!", description: "Verifique seus alertas para ver o resumo semanal." });
+              } catch (e: any) {
+                toast({ title: "Erro", description: e.message, variant: "destructive" });
+              }
+            }}>
+              Gerar Relatório Agora
+            </Button>
           </div>
         </TabsContent>
 
