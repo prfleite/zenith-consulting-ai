@@ -35,6 +35,7 @@ const SettingsPage = lazy(() => import("./pages/Settings"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Contracts = lazy(() => import("./pages/Contracts"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Install = lazy(() => import("./pages/Install"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,7 @@ function AppRoutes() {
       <Suspense fallback={<PageSkeleton />}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/install" element={<Install />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
@@ -108,8 +110,9 @@ function AppRoutes() {
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/portal" element={<Portal />} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<NotFound />} />
+           <Route path="/install" element={<Install />} />
+           <Route path="/login" element={<Navigate to="/" replace />} />
+           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </AppLayout>
