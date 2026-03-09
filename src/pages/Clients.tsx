@@ -43,7 +43,18 @@ const Clients = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = () => setSelected(prev => prev.size === paginated.length ? new Set() : new Set(paginated.map(c => c.id)));
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    for (const id of selected) { await supabase.from("client_accounts").delete().eq("id", id); }
+    toast({ title: `${selected.size} clientes excluídos` });
+    setSelected(new Set());
+    fetchClients();
+  };
 
   const fetchClients = async () => {
     const { data } = await supabase
