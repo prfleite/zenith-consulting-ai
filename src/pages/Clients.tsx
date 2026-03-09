@@ -138,6 +138,9 @@ const Clients = () => {
           <Input placeholder="Buscar por nome, segmento ou indústria..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-card border-border" />
         </div>
         <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+        {selected.size > 0 && (
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-1" /> Excluir ({selected.size})</Button>
+        )}
       </div>
 
       {loading ? (
