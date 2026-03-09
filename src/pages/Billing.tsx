@@ -236,6 +236,7 @@ const Billing = () => {
                 <p className="text-xs text-muted-foreground">{inv.client_accounts?.name}{inv.projects?.name ? ` · ${inv.projects.name}` : ""}</p>
                 <p className="text-xs text-muted-foreground">{inv.issue_date}{inv.due_date ? ` → ${inv.due_date}` : ""}</p>
               </div>
+              </div>
               <div className="flex items-center gap-3">
                 <p className="text-sm font-bold text-foreground">R$ {Number(inv.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                 {next && (

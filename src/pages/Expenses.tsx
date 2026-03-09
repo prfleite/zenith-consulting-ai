@@ -146,10 +146,18 @@ const Expenses = () => {
               <p className="text-lg font-bold text-foreground">R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
             </div>
             <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+            {selected.size > 0 && (
+              <>
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-1" /> Excluir ({selected.size})</Button>
+                <Button variant="gold-outline" size="sm" onClick={handleBulkExport}><Download className="w-4 h-4 mr-1" /> Exportar ({selected.size})</Button>
+              </>
+            )}
           </div>
           <div className="space-y-2">
             {paginatedExpenses.map((e: any) => (
               <div key={e.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggleSelect(e.id)} />
                 <div>
                   <p className="text-sm font-medium text-foreground">{e.projects?.name}</p>
                   <p className="text-xs text-muted-foreground">{e.date} · {e.category}{e.description ? ` · ${e.description}` : ""}</p>

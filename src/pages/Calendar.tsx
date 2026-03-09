@@ -143,6 +143,15 @@ const Calendar = () => {
         </h2>
         <Button variant="outline" size="icon" onClick={next}><ChevronRight className="w-4 h-4" /></Button>
         <Button variant="outline" size="sm" onClick={goToday}>Hoje</Button>
+        <div className="ml-auto">
+          <AIAssistantPanel
+            contextType="global"
+            title="Sugerir Agenda"
+            placeholder="Descreva o que precisa agendar..."
+            initialPrompt="Analise os projetos ativos, deadlines próximos e eventos existentes. Sugira reuniões e blocos de trabalho para otimizar a semana."
+            extraContext={`Mês atual: ${MONTHS[month]} ${year}\nEventos existentes:\n${events.map(e => `- ${e.title} (${e.event_type}) em ${e.start_date.slice(0, 10)}`).join("\n") || "Nenhum"}`}
+          />
+        </div>
       </div>
 
       {/* Calendar Grid */}

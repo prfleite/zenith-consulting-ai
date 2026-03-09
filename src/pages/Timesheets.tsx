@@ -234,4 +234,29 @@ const Timesheets = () => {
   );
 };
 
+// AI Suggest Component
+function AITimesheetSuggest({ weekDays, projects, userId, onSuggest }: { weekDays: string[]; projects: { id: string; name: string }[]; userId?: string; onSuggest: (s: { project_id: string; date: string; hours: number; notes: string }[]) => void }) {
+  const [loading, setLoading] = useState(false);
+  const { sendMessage, messages, isLoading } = useAIChat({ contextType: "global" });
+
+  const handleSuggest = async () => {
+    if (!userId) return;
+    setLoading(true);
+    // Fetch calendar events and tasks for the week
+    const [evRes, tkRes] = await Promise.all([
+      supabase.from("calendar_events").select("title, start_date, end_date, event_type").gte("start_date", weekDays[0]).lte("start_date", weekDays[6] + "T23:59:59"),
+      supabase.from("project_tasks").select("title, project_id, status, effort_hours_estimated").eq("assignee_id", userId).in("status", ["in_progress", "review"]),
+    ]);
+    const context = `Semana: ${weekDays[0]} a ${weekDays[6]}\n\nEventos do calendário:\n${(evRes.data || []).map(e => `- ${e.title} (${e.event_type}) em ${e.start_date}`).join("\n") || "Nenhum"}\n\nTarefas em andamento:\n${(tkRes.data || []).map(t => `- ${t.title} (${t.effort_hours_estimated || "?"}h est.) projeto: ${projects.find(p => p.id === t.project_id)?.name || t.project_id}`).join("\n") || "Nenhuma"}\n\nProjetos disponíveis:\n${projects.map(p => `- ${p.name} (${p.id})`).join("\n")}`;
+    sendMessage("Com base nos eventos e tarefas, sugira entradas de timesheet para esta semana. Para cada entrada, liste: data, projeto, horas e descrição. Formato: uma linha por entrada.", context);
+    setLoading(false);
+  };
+
+  return (
+    <Button variant="gold-outline" size="sm" onClick={handleSuggest} disabled={loading || isLoading}>
+      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />} Sugerir Horas
+    </Button>
+  );
+}
+
 export default Timesheets;

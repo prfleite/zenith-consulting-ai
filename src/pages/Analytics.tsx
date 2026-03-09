@@ -218,6 +218,20 @@ const Analytics = () => {
         <p className="text-muted-foreground mt-1">Análises detalhadas por área</p>
       </div>
 
+      {/* AI Insights Panel */}
+      {(aiLoading || aiMessages.length > 0) && (
+        <div className="bg-card rounded-xl p-5 border border-gold/20 shadow-gold">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-gold" />
+            <h3 className="text-sm font-heading font-semibold text-foreground">Insights IA</h3>
+            {aiLoading && <Loader2 className="w-4 h-4 animate-spin text-gold ml-2" />}
+          </div>
+          {aiMessages.filter(m => m.role === "assistant").map((m, i) => (
+            <pre key={i} className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">{m.content}</pre>
+          ))}
+        </div>
+      )}
+
       <Tabs defaultValue="financial">
         <TabsList className="bg-secondary flex-wrap">
           <TabsTrigger value="financial"><DollarSign className="w-4 h-4 mr-1" />Financeiro</TabsTrigger>
