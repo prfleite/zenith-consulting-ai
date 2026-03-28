@@ -116,24 +116,6 @@ const Login = () => {
             </button>
           </div>
 
-          {/* Demo credentials */}
-          <div className="mt-6 pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center mb-3">Credenciais demo:</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: "Admin", email: "admin@zenith.demo" },
-                { label: "Manager", email: "manager@zenith.demo" },
-              ].map((cred) => (
-                <button
-                  key={cred.email}
-                  onClick={() => { setEmail(cred.email); setPassword("demo123"); setIsSignUp(false); }}
-                  className="text-xs px-3 py-2 rounded-lg bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  {cred.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
