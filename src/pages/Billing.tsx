@@ -44,7 +44,7 @@ const Billing = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { displayCurrency, setDisplayCurrency, convertAndFormat } = useCurrency("BRL");
 
-  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) { n.delete(id); } else { n.add(id); } return n; });
   const handleBulkPaid = async () => {
     for (const id of selected) { await supabase.from("invoices").update({ status: "paid" as any }).eq("id", id); }
     toast({ title: `${selected.size} faturas marcadas como pagas` });

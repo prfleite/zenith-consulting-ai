@@ -46,7 +46,7 @@ const Clients = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
-  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) { n.delete(id); } else { n.add(id); } return n; });
   const toggleAll = () => setSelected(prev => prev.size === paginated.length ? new Set() : new Set(paginated.map(c => c.id)));
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;

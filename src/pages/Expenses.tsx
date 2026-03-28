@@ -33,7 +33,7 @@ const Expenses = () => {
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) { n.delete(id); } else { n.add(id); } return n; });
   const handleBulkDelete = async () => {
     for (const id of selected) { await supabase.from("expenses").delete().eq("id", id); }
     toast({ title: `${selected.size} despesas excluídas` });

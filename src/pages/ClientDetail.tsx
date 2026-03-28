@@ -30,15 +30,13 @@ const ClientDetail = () => {
 
   const loadData = async () => {
     if (!id) return;
-    const [clientRes, contactsRes, oppsRes, projRes, docsRes, npsRes, invRes] = await Promise.all([
-      supabase.from("client_accounts").select("*, owner:profiles!client_accounts_owner_id_fkey(name)").eq("id", id).single(),
-      supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false }),
-      supabase.from("opportunities").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
-      supabase.from("projects").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
-      supabase.from("documents").select("*").eq("related_client_account_id", id).order("created_at", { ascending: false }),
-      supabase.from("nps_surveys").select("*").eq("client_account_id", id).order("created_at", { ascending: false }),
-      supabase.from("invoices").select("*").eq("client_account_id", id),
-    ]);
+    const clientRes = await supabase.from("client_accounts").select("*, owner:profiles!client_accounts_owner_id_fkey(name)").eq("id", id).single();
+    const contactsRes = await supabase.from("client_contacts").select("*").eq("client_account_id", id).order("is_primary", { ascending: false });
+    const oppsRes = await supabase.from("opportunities").select("*").eq("client_account_id", id).order("created_at", { ascending: false });
+    const projRes = await supabase.from("projects").select("*").eq("client_account_id", id).order("created_at", { ascending: false });
+    const docsRes = await supabase.from("documents").select("*").eq("related_client_account_id", id).order("created_at", { ascending: false });
+    const npsRes = await supabase.from("nps_surveys").select("*").eq("client_account_id", id).order("created_at", { ascending: false });
+    const invRes = await supabase.from("invoices").select("*").eq("client_account_id", id);
     if (clientRes.data) setClient(clientRes.data);
     if (contactsRes.data) setContacts(contactsRes.data);
     if (oppsRes.data) setOpportunities(oppsRes.data);
