@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState, emptyStates } from "@/components/EmptyState";
@@ -15,6 +16,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
+
+const clientSchema = z.object({
+  name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
+  segment: z.string().optional(),
+  industry: z.string().optional(),
+  country: z.string().optional(),
+  website: z.string().url("URL inválida").optional().or(z.literal("")),
+  annual_revenue: z.string().optional(),
+});
 
 type ClientAccount = {
   id: string;
@@ -50,6 +60,7 @@ const Clients = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", segment: "", industry: "", country: "Brasil", website: "", annual_revenue: "" });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
@@ -84,7 +95,15 @@ const Clients = () => {
   useEffect(() => { fetchClients(); }, []);
 
   const handleCreate = async () => {
-    if (!form.name || !profile?.company_id) return;
+    const validation = clientSchema.safeParse(form);
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach(e => { errors[e.path[0]] = e.message; });
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+    if (!profile?.company_id) return;
     setSaving(true);
     const { error } = await supabase.from("client_accounts").insert({
       company_id: profile.company_id,
@@ -101,6 +120,7 @@ const Clients = () => {
     toast({ title: "Cliente criado com sucesso!" });
     setShowCreate(false);
     setForm({ name: "", segment: "", industry: "", country: "Brasil", website: "", annual_revenue: "" });
+    setFormErrors({});
     fetchClients();
   };
 
@@ -288,7 +308,8 @@ const Clients = () => {
               <div className="space-y-4">
                 <div>
                   <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nome *</Label>
-                  <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nome da empresa" className="bg-secondary border-border mt-1" />
+                  <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nome da empresa" className={`bg-secondary border-border mt-1 ${formErrors.name ? "border-destructive" : ""}`} />
+                  {formErrors.name && <p className="text-xs text-destructive mt-1">{formErrors.name}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -318,11 +339,12 @@ const Clients = () => {
                 </div>
                 <div>
                   <Label className="text-xs uppercase tracking-wide text-muted-foreground">Website</Label>
-                  <Input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="https://..." className="bg-secondary border-border mt-1" />
+                  <Input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="https://..." className={`bg-secondary border-border mt-1 ${formErrors.website ? "border-destructive" : ""}`} />
+                  {formErrors.website && <p className="text-xs text-destructive mt-1">{formErrors.website}</p>}
                 </div>
               </div>
               <DialogFooter className="mt-2">
-                <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+                <Button variant="outline" onClick={() => { setShowCreate(false); setFormErrors({}); }}>Cancelar</Button>
                 <Button variant="gold" onClick={handleCreate} disabled={saving || !form.name}>
                   {saving ? "Salvando..." : "Criar Cliente"}
                 </Button>

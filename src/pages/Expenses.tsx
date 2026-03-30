@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { z } from "zod";
 import { Plus, Check, X, Trash2, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { exportToCSV } from "@/lib/exportUtils";
@@ -19,6 +20,13 @@ import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 
 const categories = ["Transporte", "Hospedagem", "Alimentação", "Software", "Outros"];
 
+const expenseSchema = z.object({
+  date: z.string().min(1, "Data obrigatória"),
+  project_id: z.string().min(1, "Projeto obrigatório"),
+  category: z.string().min(1, "Categoria obrigatória"),
+  amount: z.string().refine(v => Number(v) > 0, "Valor deve ser maior que zero"),
+});
+
 const Expenses = () => {
   const { profile, user } = useAuth();
   const { toast } = useToast();
@@ -28,6 +36,7 @@ const Expenses = () => {
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ date: "", project_id: "", category: "Outros", amount: "", description: "", receipt_url: "" });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
@@ -68,7 +77,15 @@ const Expenses = () => {
   useEffect(() => { fetchExpenses(); fetchPending(); fetchProjects(); }, [user]);
 
   const handleCreate = async () => {
-    if (!form.date || !form.project_id || !form.amount || !user) return;
+    const validation = expenseSchema.safeParse(form);
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach(e => { errors[e.path[0]] = e.message; });
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+    if (!user) return;
     const { error } = await supabase.from("expenses").insert({
       user_id: user.id, project_id: form.project_id, date: form.date,
       amount: Number(form.amount), category: form.category, description: form.description || null,
@@ -78,6 +95,7 @@ const Expenses = () => {
     toast({ title: "Despesa registrada!" });
     setDialogOpen(false);
     setForm({ date: "", project_id: "", category: "Outros", amount: "", description: "", receipt_url: "" });
+    setFormErrors({});
     fetchExpenses();
   };
 
@@ -126,20 +144,32 @@ const Expenses = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>Nova Despesa</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Data *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-              <div><Label>Projeto *</Label>
+              <div>
+                <Label>Data *</Label>
+                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={formErrors.date ? "border-destructive" : ""} />
+                {formErrors.date && <p className="text-xs text-destructive mt-1">{formErrors.date}</p>}
+              </div>
+              <div>
+                <Label>Projeto *</Label>
                 <Select value={form.project_id} onValueChange={(v) => setForm({ ...form, project_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className={formErrors.project_id ? "border-destructive" : ""}><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                 </Select>
+                {formErrors.project_id && <p className="text-xs text-destructive mt-1">{formErrors.project_id}</p>}
               </div>
-              <div><Label>Categoria</Label>
+              <div>
+                <Label>Categoria</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={formErrors.category ? "border-destructive" : ""}><SelectValue /></SelectTrigger>
                   <SelectContent>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
+                {formErrors.category && <p className="text-xs text-destructive mt-1">{formErrors.category}</p>}
               </div>
-              <div><Label>Valor (R$) *</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+              <div>
+                <Label>Valor (R$) *</Label>
+                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={formErrors.amount ? "border-destructive" : ""} />
+                {formErrors.amount && <p className="text-xs text-destructive mt-1">{formErrors.amount}</p>}
+              </div>
               <div><Label>Descrição</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>URL do Recibo</Label><Input value={form.receipt_url} onChange={(e) => setForm({ ...form, receipt_url: e.target.value })} placeholder="https://..." /></div>
               <Button variant="gold" className="w-full" onClick={handleCreate}>Registrar</Button>

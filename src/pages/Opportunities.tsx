@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, MouseEvent as ReactMouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState, emptyStates } from "@/components/EmptyState";
@@ -13,6 +14,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { TablePagination } from "@/components/TablePagination";
+
+const opportunitySchema = z.object({
+  title: z.string().min(3, "Título deve ter ao menos 3 caracteres"),
+  client_account_id: z.string().min(1, "Selecione um cliente"),
+  expected_value: z.string().refine(v => !v || Number(v) > 0, "Valor deve ser maior que zero"),
+  probability: z.string().refine(v => {
+    const n = Number(v);
+    return n >= 0 && n <= 100;
+  }, "Probabilidade deve ser entre 0 e 100"),
+  close_date: z.string().optional().refine(v => {
+    if (!v) return true;
+    return new Date(v) >= new Date(new Date().toDateString());
+  }, "Data de fechamento deve ser futura"),
+});
 
 type Opportunity = {
   id: string;
@@ -119,6 +134,7 @@ const Opportunities = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: "", client_account_id: "", expected_value: "", probability: "10", stage: "lead", close_date: "", description: "" });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
@@ -138,7 +154,15 @@ const Opportunities = () => {
   useEffect(() => { fetchData(); }, []);
 
   const handleCreate = async () => {
-    if (!form.title || !form.client_account_id || !profile?.company_id) return;
+    const validation = opportunitySchema.safeParse(form);
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach(e => { errors[e.path[0]] = e.message; });
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+    if (!profile?.company_id) return;
     setSaving(true);
     const { error } = await supabase.from("opportunities").insert({
       company_id: profile.company_id, title: form.title, client_account_id: form.client_account_id,
@@ -151,6 +175,7 @@ const Opportunities = () => {
     toast({ title: "Oportunidade criada!" });
     setShowCreate(false);
     setForm({ title: "", client_account_id: "", expected_value: "", probability: "10", stage: "lead", close_date: "", description: "" });
+    setFormErrors({});
     fetchData();
   };
 
@@ -193,7 +218,7 @@ const Opportunities = () => {
         <Button variant="gold" size="sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> Nova Oportunidade</Button>
       </div>
       <EmptyState {...emptyStates.opportunities} actionLabel="Nova Oportunidade" onAction={() => setShowCreate(true)} />
-      <CreateDialog open={showCreate} onOpenChange={setShowCreate} form={form} setForm={setForm} clients={clients} onSubmit={handleCreate} saving={saving} />
+      <CreateDialog open={showCreate} onOpenChange={setShowCreate} form={form} setForm={setForm} clients={clients} onSubmit={handleCreate} saving={saving} formErrors={formErrors} />
     </div>
   );
 
@@ -345,12 +370,12 @@ const Opportunities = () => {
         </>
       )}
 
-      <CreateDialog open={showCreate} onOpenChange={setShowCreate} form={form} setForm={setForm} clients={clients} onSubmit={handleCreate} saving={saving} />
+      <CreateDialog open={showCreate} onOpenChange={setShowCreate} form={form} setForm={setForm} clients={clients} onSubmit={handleCreate} saving={saving} formErrors={formErrors} />
     </div>
   );
 };
 
-function CreateDialog({ open, onOpenChange, form, setForm, clients, onSubmit, saving }: any) {
+function CreateDialog({ open, onOpenChange, form, setForm, clients, onSubmit, saving, formErrors }: any) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -358,23 +383,27 @@ function CreateDialog({ open, onOpenChange, form, setForm, clients, onSubmit, sa
         <div className="space-y-4">
           <div>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">Título *</Label>
-            <Input value={form.title} onChange={(e: any) => setForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="Ex: Consultoria estratégica" className="bg-secondary border-border mt-1" />
+            <Input value={form.title} onChange={(e: any) => setForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="Ex: Consultoria estratégica" className={`bg-secondary border-border mt-1 ${formErrors?.title ? "border-destructive" : ""}`} />
+            {formErrors?.title && <p className="text-xs text-destructive mt-1">{formErrors.title}</p>}
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">Cliente *</Label>
             <Select value={form.client_account_id} onValueChange={(v: any) => setForm((f: any) => ({ ...f, client_account_id: v }))}>
-              <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+              <SelectTrigger className={`bg-secondary border-border mt-1 ${formErrors?.client_account_id ? "border-destructive" : ""}`}><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
               <SelectContent>{clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
+            {formErrors?.client_account_id && <p className="text-xs text-destructive mt-1">{formErrors.client_account_id}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Valor Esperado (R$)</Label>
-              <Input type="number" value={form.expected_value} onChange={(e: any) => setForm((f: any) => ({ ...f, expected_value: e.target.value }))} placeholder="0" className="bg-secondary border-border mt-1" />
+              <Input type="number" value={form.expected_value} onChange={(e: any) => setForm((f: any) => ({ ...f, expected_value: e.target.value }))} placeholder="0" className={`bg-secondary border-border mt-1 ${formErrors?.expected_value ? "border-destructive" : ""}`} />
+              {formErrors?.expected_value && <p className="text-xs text-destructive mt-1">{formErrors.expected_value}</p>}
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Probabilidade (%)</Label>
-              <Input type="number" value={form.probability} onChange={(e: any) => setForm((f: any) => ({ ...f, probability: e.target.value }))} min="0" max="100" className="bg-secondary border-border mt-1" />
+              <Input type="number" value={form.probability} onChange={(e: any) => setForm((f: any) => ({ ...f, probability: e.target.value }))} min="0" max="100" className={`bg-secondary border-border mt-1 ${formErrors?.probability ? "border-destructive" : ""}`} />
+              {formErrors?.probability && <p className="text-xs text-destructive mt-1">{formErrors.probability}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -387,7 +416,8 @@ function CreateDialog({ open, onOpenChange, form, setForm, clients, onSubmit, sa
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Data de Fechamento</Label>
-              <Input type="date" value={form.close_date} onChange={(e: any) => setForm((f: any) => ({ ...f, close_date: e.target.value }))} className="bg-secondary border-border mt-1" />
+              <Input type="date" value={form.close_date} onChange={(e: any) => setForm((f: any) => ({ ...f, close_date: e.target.value }))} className={`bg-secondary border-border mt-1 ${formErrors?.close_date ? "border-destructive" : ""}`} />
+              {formErrors?.close_date && <p className="text-xs text-destructive mt-1">{formErrors.close_date}</p>}
             </div>
           </div>
         </div>

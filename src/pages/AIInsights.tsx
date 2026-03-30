@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Send, Sparkles, TrendingUp, AlertTriangle, Lightbulb, BarChart3, Zap, Target, DollarSign, Users } from "lucide-react";
+import {
+  Brain, Send, Sparkles, TrendingUp, AlertTriangle, Lightbulb,
+  BarChart3, Zap, Target, DollarSign, Users, ChevronRight,
+  AlertCircle, CheckCircle2, Clock, TrendingDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAIChat } from "@/lib/ai/useAIChat";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 const quickPrompts = [
   {
@@ -56,6 +61,34 @@ const quickPrompts = [
     description: "Otimize a distribuição de consultores por projeto",
   },
 ];
+
+// Mock insight data
+const mockInsights = {
+  churnRisk: [
+    { client: "TechCorp Brasil", score: 72, reason: "3 projetos atrasados, sem engajamento em 14 dias", action: "Agendar reunião de alinhamento" },
+    { client: "Grupo Santander", score: 58, reason: "NPS baixo (6/10) na última pesquisa", action: "Enviar plano de recuperação" },
+    { client: "Varejo SA", score: 45, reason: "Fatura vencida há 30 dias", action: "Cobrança + oferta de parcelamento" },
+  ],
+  closingOpps: [
+    { title: "Transformação Digital Corp X", value: 180000, probability: 85, daysLeft: 7, action: "Enviar proposta revisada com desconto 5%" },
+    { title: "Consultoria Estratégica 2026", value: 95000, probability: 72, daysLeft: 14, action: "Reunião com decisor — marcar até sexta" },
+    { title: "Implementação ERP Médio Porte", value: 220000, probability: 68, daysLeft: 21, action: "Apresentar ROI consolidado" },
+  ],
+  delayedProjects: [
+    { project: "Mapeamento de Processos", daysLate: 12, cause: "Entregas pendentes do cliente", solution: "Reunião de alinhamento + ajuste de cronograma" },
+    { project: "Auditoria Financeira Q1", daysLate: 5, cause: "Consultor sênior sobrealoc. (120%)", solution: "Realocar analista para apoio" },
+  ],
+  forecast: {
+    month: "Abril 2026",
+    scenarios: [
+      { label: "Pessimista", value: 280000, color: "text-destructive" },
+      { label: "Base", value: 420000, color: "text-warning" },
+      { label: "Otimista", value: 580000, color: "text-success" },
+    ],
+    pipelineConverted: 165000,
+    recurringRevenue: 115000,
+  },
+};
 
 const AIInsights = () => {
   const { messages, isLoading, sendMessage } = useAIChat({ contextType: "global" });
@@ -110,7 +143,7 @@ const AIInsights = () => {
       >
         <div>
           <h1 className="text-3xl md:text-4xl font-heading font-bold text-gradient-gold">
-            IA <span className="text-gradient-gold">Insights</span>
+            IA Insights
           </h1>
           <p className="text-muted-foreground mt-1.5 text-sm">
             Inteligência artificial aplicada à sua consultoria
@@ -119,6 +152,165 @@ const AIInsights = () => {
         <div className="flex items-center gap-2 bg-success/10 border border-success/25 rounded-xl px-3 py-2">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
           <span className="text-sm text-success font-medium">IA Ativa</span>
+        </div>
+      </motion.div>
+
+      {/* Auto Insights Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4"
+      >
+        {/* Churn Risk */}
+        <div className="bg-card rounded-2xl border border-destructive/20 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-destructive/10 border border-destructive/25 flex items-center justify-center">
+              <AlertCircle className="w-4 h-4 text-destructive" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Clientes em Risco</h3>
+              <p className="text-[10px] text-muted-foreground">{mockInsights.churnRisk.length} alertas</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {mockInsights.churnRisk.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 + i * 0.07 }}
+                className="p-2.5 bg-destructive/5 border border-destructive/15 rounded-lg"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-foreground">{item.client}</span>
+                  <Badge className="bg-destructive/20 text-destructive text-[10px]">{item.score}% risco</Badge>
+                </div>
+                <p className="text-[10px] text-muted-foreground mb-1">{item.reason}</p>
+                <p className="text-[10px] text-destructive font-medium flex items-center gap-1">
+                  <ChevronRight className="w-3 h-3" /> {item.action}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Closing Opps */}
+        <div className="bg-card rounded-2xl border border-success/20 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-success/10 border border-success/25 flex items-center justify-center">
+              <Target className="w-4 h-4 text-success" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Próximas de Fechar</h3>
+              <p className="text-[10px] text-muted-foreground">{mockInsights.closingOpps.length} oportunidades</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {mockInsights.closingOpps.map((opp, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + i * 0.07 }}
+                className="p-2.5 bg-success/5 border border-success/15 rounded-lg"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-foreground truncate flex-1 pr-2">{opp.title}</span>
+                  <Badge className="bg-success/20 text-success text-[10px] flex-shrink-0">{opp.probability}%</Badge>
+                </div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-gold font-medium">
+                    R$ {(opp.value / 1000).toFixed(0)}k
+                  </span>
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" /> {opp.daysLeft}d restantes
+                  </span>
+                </div>
+                <p className="text-[10px] text-success font-medium flex items-center gap-1">
+                  <ChevronRight className="w-3 h-3" /> {opp.action}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Delayed Projects */}
+        <div className="bg-card rounded-2xl border border-warning/20 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-warning/10 border border-warning/25 flex items-center justify-center">
+              <TrendingDown className="w-4 h-4 text-warning" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Projetos com Atraso</h3>
+              <p className="text-[10px] text-muted-foreground">{mockInsights.delayedProjects.length} alertas</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {mockInsights.delayedProjects.map((proj, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 + i * 0.07 }}
+                className="p-2.5 bg-warning/5 border border-warning/15 rounded-lg"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-foreground">{proj.project}</span>
+                  <Badge className="bg-warning/20 text-warning text-[10px]">{proj.daysLate}d atraso</Badge>
+                </div>
+                <p className="text-[10px] text-muted-foreground mb-1">Causa: {proj.cause}</p>
+                <p className="text-[10px] text-warning font-medium flex items-center gap-1">
+                  <CheckCircle2 className="w-2.5 h-2.5" /> {proj.solution}
+                </p>
+              </motion.div>
+            ))}
+            <div className="p-2.5 bg-success/5 border border-success/15 rounded-lg">
+              <p className="text-xs font-medium text-success flex items-center gap-1 mb-0.5">
+                <CheckCircle2 className="w-3 h-3" /> 4 projetos no prazo
+              </p>
+              <p className="text-[10px] text-muted-foreground">Transformação Digital, Auditoria LGPD...</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Forecast */}
+        <div className="bg-card rounded-2xl border border-gold/20 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gold/10 border border-gold/25 flex items-center justify-center">
+              <BarChart3 className="w-4 h-4 text-gold" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Receita Prevista</h3>
+              <p className="text-[10px] text-muted-foreground">{mockInsights.forecast.month}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {mockInsights.forecast.scenarios.map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + i * 0.07 }}
+                className="flex items-center justify-between p-2.5 bg-secondary/40 rounded-lg"
+              >
+                <span className="text-xs text-muted-foreground">{s.label}</span>
+                <span className={`text-sm font-bold ${s.color}`}>
+                  R$ {(s.value / 1000).toFixed(0)}k
+                </span>
+              </motion.div>
+            ))}
+            <div className="pt-1 border-t border-border/50 space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>Pipeline convertida</span>
+                <span className="text-foreground">R$ {(mockInsights.forecast.pipelineConverted / 1000).toFixed(0)}k</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>Receita recorrente</span>
+                <span className="text-foreground">R$ {(mockInsights.forecast.recurringRevenue / 1000).toFixed(0)}k</span>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
