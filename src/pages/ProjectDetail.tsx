@@ -187,7 +187,7 @@ const ProjectDetail = () => {
   const projectContext = `Projeto: ${project.name}\nCliente: ${(project.client_accounts as any)?.name}\nStatus: ${project.status}\nOrçamento: R$ ${project.budget_fee || 0}\nHoras Budget: ${project.budget_hours || "N/A"}\nTarefas existentes: ${tasks.map((t) => `${t.title} (${t.status})`).join(", ") || "Nenhuma"}`;
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="p-8 space-y-6">
       <Breadcrumbs entityName={project.name} />
       <Link to="/projects" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="w-4 h-4" /> Projetos
@@ -198,7 +198,7 @@ const ProjectDetail = () => {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-heading font-bold text-foreground">{project.name}</h1>
+              <h1 className="text-2xl font-heading font-bold text-gradient-gold">{project.name}</h1>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sc.class}`}>{sc.label}</span>
             </div>
             {project.code && <p className="text-sm text-muted-foreground">{project.code}</p>}

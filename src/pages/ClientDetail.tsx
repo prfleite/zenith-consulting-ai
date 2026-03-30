@@ -115,7 +115,7 @@ const ClientDetail = () => {
   const clientContext = `Cliente: ${client.name}\nSegmento: ${client.segment || "N/A"}\nIndústria: ${client.industry || "N/A"}\nHealth Score: ${client.health_score || "N/A"}\nReceita Anual: R$ ${client.annual_revenue || 0}\nNPS Médio: ${avgNps}\nOportunidades: ${opportunities.length} (${opportunities.filter(o => o.stage === "won").length} ganhas)\nProjetos: ${projects.length} (${projects.filter(p => p.status === "active").length} ativos)\nReceita Recebida: R$ ${totalRevenue.toLocaleString("pt-BR")}`;
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="p-8 space-y-6">
       <Breadcrumbs entityName={client.name} />
       <Link to="/clients" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" /> Voltar para Clientes
@@ -127,7 +127,7 @@ const ClientDetail = () => {
           <Building2 className="w-8 h-8 text-primary-foreground" />
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-heading font-bold text-foreground">{client.name}</h1>
+          <h1 className="text-2xl font-heading font-bold text-gradient-gold">{client.name}</h1>
           <p className="text-muted-foreground">{client.industry} · {client.segment} · {client.country}</p>
         </div>
         <div className={`text-center ${healthColor}`}>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { User, Bell, Brain, CreditCard, Users, Plug, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,11 +110,20 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in max-w-4xl">
-      <div>
-        <h1 className="text-3xl font-heading font-bold text-foreground">Configurações</h1>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-8 space-y-6 max-w-4xl"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-3xl font-heading font-bold text-gradient-gold">Configurações</h1>
         <p className="text-muted-foreground mt-1">Gerencie seu workspace e preferências</p>
-      </div>
+      </motion.div>
 
       <Tabs defaultValue="general">
         <TabsList className="bg-secondary flex-wrap">
@@ -387,7 +397,7 @@ const SettingsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 };
 

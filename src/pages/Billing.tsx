@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Search, Filter, Download, FileDown, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Plus, Search, Filter, Download, FileDown, CheckCircle2, DollarSign, TrendingUp, Clock, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { Button } from "@/components/ui/button";
@@ -17,13 +18,21 @@ import { TablePagination } from "@/components/TablePagination";
 import { AIAssistantPanel } from "@/components/AIAssistantPanel";
 import { CurrencySelector } from "@/components/CurrencySelector";
 import { useCurrency } from "@/hooks/useCurrency";
+import { KPICard } from "@/components/KPICard";
 
-const invoiceStatusConfig: Record<string, { label: string; class: string }> = {
-  draft: { label: "Rascunho", class: "bg-muted text-muted-foreground" },
-  sent: { label: "Enviada", class: "bg-info/20 text-info" },
-  paid: { label: "Paga", class: "bg-success/20 text-success" },
-  overdue: { label: "Atrasada", class: "bg-destructive/20 text-destructive" },
-  cancelled: { label: "Cancelada", class: "bg-muted text-muted-foreground" },
+const invoiceStatusConfig: Record<string, { label: string; class: string; icon: any }> = {
+  draft: { label: "Rascunho", class: "bg-muted/60 text-muted-foreground border-border", icon: Clock },
+  sent: { label: "Enviada", class: "bg-info/15 text-info border-info/25", icon: TrendingUp },
+  paid: { label: "Paga", class: "bg-success/15 text-success border-success/25", icon: CheckCircle2 },
+  overdue: { label: "Atrasada", class: "bg-destructive/15 text-destructive border-destructive/25", icon: AlertCircle },
+  cancelled: { label: "Cancelada", class: "bg-muted/60 text-muted-foreground border-border", icon: AlertCircle },
+};
+
+const tooltipStyle = {
+  background: "hsl(220,20%,11%)",
+  border: "1px solid hsl(43,74%,55%,0.2)",
+  borderRadius: "10px",
+  color: "hsl(40,12%,93%)",
 };
 
 const Billing = () => {
@@ -44,17 +53,19 @@ const Billing = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { displayCurrency, setDisplayCurrency, convertAndFormat } = useCurrency("BRL");
 
-  const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) { n.delete(id); } else { n.add(id); } return n; });
+  const toggleSelect = (id: string) => setSelected(prev => {
+    const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n;
+  });
+
   const handleBulkPaid = async () => {
-    for (const id of selected) { await supabase.from("invoices").update({ status: "paid" as any }).eq("id", id); }
+    for (const id of selected) await supabase.from("invoices").update({ status: "paid" as any }).eq("id", id);
     toast({ title: `${selected.size} faturas marcadas como pagas` });
     setSelected(new Set());
     fetchInvoices();
   };
 
   const fetchInvoices = async () => {
-    const { data } = await supabase.from("invoices").select("*, client_accounts(name), projects(name)")
-      .order("issue_date", { ascending: false });
+    const { data } = await supabase.from("invoices").select("*, client_accounts(name), projects(name)").order("issue_date", { ascending: false });
     setInvoices(data || []);
   };
 
@@ -90,7 +101,7 @@ const Billing = () => {
     fetchInvoices();
   };
 
-  const filtered = invoices.filter((inv) => {
+  const filtered = invoices.filter(inv => {
     if (statusFilter !== "all" && inv.status !== statusFilter) return false;
     if (clientFilter !== "all" && inv.client_account_id !== clientFilter) return false;
     if (search && !inv.number.toLowerCase().includes(search.toLowerCase())) return false;
@@ -100,14 +111,14 @@ const Billing = () => {
   });
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-
   const totalInvoiced = invoices.reduce((s, i) => s + Number(i.amount), 0);
-  const totalPaid = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
-  const totalPending = invoices.filter((i) => ["draft", "sent", "overdue"].includes(i.status)).reduce((s, i) => s + Number(i.amount), 0);
+  const totalPaid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
+  const totalPending = invoices.filter(i => ["draft", "sent", "overdue"].includes(i.status)).reduce((s, i) => s + Number(i.amount), 0);
+  const overdueCount = invoices.filter(i => i.status === "overdue").length;
 
   const chartData = useMemo(() => {
     const months: Record<string, { month: string; faturado: number; recebido: number }> = {};
-    invoices.forEach((inv) => {
+    invoices.forEach(inv => {
       const m = inv.issue_date?.slice(0, 7);
       if (!m) return;
       if (!months[m]) months[m] = { month: m, faturado: 0, recebido: 0 };
@@ -120,152 +131,182 @@ const Billing = () => {
   const nextStatus: Record<string, string> = { draft: "sent", sent: "paid" };
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-end justify-between">
+    <div className="p-6 md:p-8 space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="flex items-end justify-between flex-wrap gap-4"
+      >
         <div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">Faturamento</h1>
-          <p className="text-muted-foreground mt-1">Gestão de faturas e receita</p>
+          <h1 className="text-3xl md:text-4xl font-heading font-bold text-gradient-gold">Faturamento</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            Gestão de faturas e receita —{" "}
+            {overdueCount > 0 && <span className="text-destructive font-semibold">{overdueCount} fatura(s) atrasada(s)</span>}
+            {overdueCount === 0 && <span className="text-success">sem atrasos</span>}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(invoices.map(i => ({ Número: i.number, Status: i.status, Valor: i.amount, Emissão: i.issue_date, Vencimento: i.due_date || "—" })), "faturas")}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(invoices.map(i => ({ Número: i.number, Status: i.status, Valor: i.amount, Emissão: i.issue_date })), "faturas")}>
             <Download className="w-4 h-4" /> CSV
           </Button>
-          <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Faturas", invoices.map(i => ({ Número: i.number, Status: i.status, "Valor (R$)": Number(i.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 }), Emissão: i.issue_date, Vencimento: i.due_date || "—" })))}>
+          <Button variant="gold-outline" size="sm" onClick={() => exportToPDF("Faturas", invoices.map(i => ({ Número: i.number, Status: i.status, "Valor (R$)": Number(i.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 }), Emissão: i.issue_date })))}>
             <FileDown className="w-4 h-4" /> PDF
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Fatura</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Nova Fatura</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div><Label>Número *</Label><Input value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="INV-001" /></div>
-              <div><Label>Cliente *</Label>
-                <Select value={form.client_account_id} onValueChange={(v) => setForm({ ...form, client_account_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+            <DialogTrigger asChild>
+              <Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Fatura</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle className="font-heading text-lg">Nova Fatura</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Número *</Label><Input value={form.number} onChange={e => setForm({ ...form, number: e.target.value })} placeholder="INV-001" className="mt-1 bg-secondary border-border" /></div>
+                <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Cliente *</Label>
+                  <Select value={form.client_account_id} onValueChange={v => setForm({ ...form, client_account_id: v })}>
+                    <SelectTrigger className="mt-1 bg-secondary border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Projeto</Label>
+                  <Select value={form.project_id} onValueChange={v => setForm({ ...form, project_id: v })}>
+                    <SelectTrigger className="mt-1 bg-secondary border-border"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                    <SelectContent>{projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Valor (R$) *</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} className="mt-1 bg-secondary border-border" /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Emissão</Label><Input type="date" value={form.issue_date} onChange={e => setForm({ ...form, issue_date: e.target.value })} className="mt-1 bg-secondary border-border" /></div>
+                  <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Vencimento</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} className="mt-1 bg-secondary border-border" /></div>
+                </div>
+                <div><Label className="text-xs uppercase tracking-wide text-muted-foreground">Notas</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="mt-1 bg-secondary border-border" /></div>
+                <Button variant="gold" className="w-full" onClick={handleCreate}>Criar Fatura</Button>
               </div>
-              <div><Label>Projeto</Label>
-                <Select value={form.project_id} onValueChange={(v) => setForm({ ...form, project_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>{projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div><Label>Valor (R$) *</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Emissão</Label><Input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} /></div>
-                <div><Label>Vencimento</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
-              </div>
-              <div><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-              <Button variant="gold" className="w-full" onClick={handleCreate}>Criar Fatura</Button>
-            </div>
-          </DialogContent>
+            </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div className="bg-card rounded-xl p-5 border border-border shadow-card">
-          <span className="text-sm text-muted-foreground">Total Faturado</span>
-          <p className="text-2xl font-bold text-foreground">{convertAndFormat(totalInvoiced)}</p>
-        </div>
-        <div className="bg-card rounded-xl p-5 border border-border shadow-card">
-          <span className="text-sm text-muted-foreground">Total Recebido</span>
-          <p className="text-2xl font-bold text-success">{convertAndFormat(totalPaid)}</p>
-        </div>
-        <div className="bg-card rounded-xl p-5 border border-border shadow-card">
-          <span className="text-sm text-muted-foreground">Pendente</span>
-          <p className="text-2xl font-bold text-warning">{convertAndFormat(totalPending)}</p>
-        </div>
-        <div className="bg-card rounded-xl p-5 border border-border shadow-card flex flex-col items-center justify-center gap-2">
-          <span className="text-sm text-muted-foreground">Moeda</span>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard label="Total Faturado" value={convertAndFormat(totalInvoiced)} numericValue={Math.round(totalInvoiced)} sub={`${invoices.length} faturas`} icon={DollarSign} iconColor="text-foreground" delay={0} />
+        <KPICard label="Total Recebido" value={convertAndFormat(totalPaid)} numericValue={Math.round(totalPaid)} sub={`${invoices.filter(i => i.status === "paid").length} pagas`} icon={CheckCircle2} iconColor="text-success" delay={0.06} />
+        <KPICard label="Pendente" value={convertAndFormat(totalPending)} numericValue={Math.round(totalPending)} sub={`${invoices.filter(i => ["draft","sent","overdue"].includes(i.status)).length} em aberto`} icon={Clock} iconColor="text-warning" delay={0.12} />
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="bg-card rounded-2xl p-5 border border-border flex flex-col items-center justify-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Moeda de Exibição</span>
           <CurrencySelector value={displayCurrency} onChange={setDisplayCurrency} />
-        </div>
+        </motion.div>
       </div>
 
-      {/* Revenue Chart */}
+      {/* Chart */}
       {chartData.length > 0 && (
-        <div className="bg-card rounded-xl p-6 border border-border shadow-card">
-          <h3 className="text-lg font-heading font-semibold text-foreground mb-4">Receita Mensal</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 18%)" />
-              <XAxis dataKey="month" stroke="hsl(220, 10%, 50%)" fontSize={12} />
-              <YAxis stroke="hsl(220, 10%, 50%)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip contentStyle={{ background: "hsl(220, 18%, 12%)", border: "1px solid hsl(220, 14%, 18%)", borderRadius: "8px", color: "hsl(40, 10%, 92%)" }} />
-              <Bar dataKey="faturado" fill="hsl(43, 74%, 55%)" radius={[4, 4, 0, 0]} name="Faturado" />
-              <Bar dataKey="recebido" fill="hsl(152, 60%, 45%)" radius={[4, 4, 0, 0]} name="Recebido" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-card rounded-2xl p-6 border border-border shadow-card hover:border-[var(--border-gold)] transition-all duration-300"
+        >
+          <h3 className="text-base font-heading font-semibold text-foreground mb-1">Receita Mensal</h3>
+          <p className="text-xs text-muted-foreground mb-4">Últimos 6 meses — Faturado vs Recebido</p>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={chartData} margin={{ left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,16%)" />
+              <XAxis dataKey="month" stroke="hsl(220,10%,45%)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(220,10%,45%)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="faturado" fill="hsl(43,74%,55%)" radius={[5, 5, 0, 0]} name="Faturado" opacity={0.7} />
+              <Bar dataKey="recebido" fill="hsl(152,60%,45%)" radius={[5, 5, 0, 0]} name="Recebido" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </motion.div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Buscar por número..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[160px]"><Filter className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            {Object.entries(invoiceStatusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Cliente" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Clientes</SelectItem>
-            {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={(d) => { setDateFrom(d); setPage(1); }} onChangeEnd={(d) => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
-        {selected.size > 0 && (
-          <Button variant="gold" size="sm" onClick={handleBulkPaid}><CheckCircle2 className="w-4 h-4 mr-1" /> Marcar Pagas ({selected.size})</Button>
-        )}
-      </div>
-
-      {/* AI Cash Flow Prediction */}
+      {/* AI Panel */}
       <AIAssistantPanel
         contextType="billing_forecast"
         title="Previsão de Fluxo de Caixa IA"
         placeholder="Ex: Qual a previsão de recebimento para os próximos 3 meses?"
         initialPrompt="Analise o histórico de faturas e gere uma previsão de fluxo de caixa para os próximos 3 meses com recomendações de cobrança."
-        extraContext={`Resumo de faturas:\n- Total faturado: R$ ${totalInvoiced.toLocaleString("pt-BR")}\n- Total recebido: R$ ${totalPaid.toLocaleString("pt-BR")}\n- Pendente: R$ ${totalPending.toLocaleString("pt-BR")}\n- Faturas por status: ${Object.entries(invoiceStatusConfig).map(([k]) => `${k}: ${invoices.filter(i => i.status === k).length}`).join(", ")}\n- Últimas faturas: ${invoices.slice(0, 10).map(i => `${i.number} R$${i.amount} ${i.status} venc:${i.due_date || "N/A"}`).join("; ")}`}
+        extraContext={`Total faturado: R$ ${totalInvoiced.toLocaleString("pt-BR")}\nRecebido: R$ ${totalPaid.toLocaleString("pt-BR")}\nPendente: R$ ${totalPending.toLocaleString("pt-BR")}`}
       />
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9 bg-secondary/50 border-border" placeholder="Buscar por número..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-[165px] bg-secondary/50 border-border"><Filter className="w-4 h-4 mr-2 text-muted-foreground" /><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos Status</SelectItem>
+            {Object.entries(invoiceStatusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={clientFilter} onValueChange={v => { setClientFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-[185px] bg-secondary/50 border-border"><SelectValue placeholder="Cliente" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos Clientes</SelectItem>
+            {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <DateRangeFilter startDate={dateFrom} endDate={dateTo} onChangeStart={d => { setDateFrom(d); setPage(1); }} onChangeEnd={d => { setDateTo(d); setPage(1); }} onClear={() => { setDateFrom(undefined); setDateTo(undefined); setPage(1); }} />
+        {selected.size > 0 && (
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+            <Button variant="gold" size="sm" onClick={handleBulkPaid}>
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Marcar Pagas ({selected.size})
+            </Button>
+          </motion.div>
+        )}
+      </div>
 
       {/* Invoice List */}
       <div className="space-y-2">
-        {paginated.map((inv: any) => {
+        {paginated.map((inv: any, i) => {
           const sc = invoiceStatusConfig[inv.status] || invoiceStatusConfig.draft;
           const next = nextStatus[inv.status];
+          const StatusIcon = sc.icon;
           return (
-            <div key={inv.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between hover:border-gold-subtle transition-colors">
-              <div className="flex items-center gap-3">
+            <motion.div
+              key={inv.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="bg-card rounded-2xl p-4 border border-border flex items-center justify-between hover:border-[var(--border-gold)] transition-all duration-200 gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
                 <Checkbox checked={selected.has(inv.id)} onCheckedChange={() => toggleSelect(inv.id)} />
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-foreground">{inv.number}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${sc.class}`}>{sc.label}</span>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${sc.class} border`}>
+                  <StatusIcon className="w-4 h-4" />
                 </div>
-                <p className="text-xs text-muted-foreground">{inv.client_accounts?.name}{inv.projects?.name ? ` · ${inv.projects.name}` : ""}</p>
-                <p className="text-xs text-muted-foreground">{inv.issue_date}{inv.due_date ? ` → ${inv.due_date}` : ""}</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">{inv.number}</p>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${sc.class}`}>{sc.label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {inv.client_accounts?.name}{inv.projects?.name ? ` · ${inv.projects.name}` : ""}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{inv.issue_date}{inv.due_date ? ` → ${inv.due_date}` : ""}</p>
+                </div>
               </div>
-              </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0">
                 <p className="text-sm font-bold text-foreground">R$ {Number(inv.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                 {next && (
-                  <Button size="sm" variant="gold-outline" onClick={() => updateStatus(inv.id, next)}>
+                  <Button size="sm" variant="gold-outline" onClick={() => updateStatus(inv.id, next)} className="text-xs">
                     {next === "sent" ? "Enviar" : "Marcar Paga"}
                   </Button>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
-        {filtered.length === 0 && <p className="text-center text-muted-foreground py-8">Nenhuma fatura encontrada.</p>}
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-25" />
+            <p>Nenhuma fatura encontrada</p>
+          </div>
+        )}
       </div>
 
       {filtered.length > 0 && (

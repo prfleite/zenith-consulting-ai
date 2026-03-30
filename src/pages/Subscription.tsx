@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Check, Crown, Sparkles, Zap, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -77,11 +78,20 @@ const Subscription = () => {
   ];
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in max-w-6xl">
-      <div>
-        <h1 className="text-3xl font-heading font-bold text-foreground">Planos & Assinatura</h1>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-8 space-y-8 max-w-6xl"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-3xl font-heading font-bold text-gradient-gold">Planos & Assinatura</h1>
         <p className="text-muted-foreground mt-1">Gerencie seu plano e créditos de IA</p>
-      </div>
+      </motion.div>
 
       {/* Credits Balance */}
       <div className="bg-card rounded-xl p-6 border border-gold-subtle">
@@ -104,15 +114,22 @@ const Subscription = () => {
 
       {/* Plans */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {plans.map((plan) => {
+        {plans.map((plan, i) => {
           const Icon = planIcons[plan.name] || Zap;
           const isCurrent = plan.id === currentPlanId;
           const price = annual ? plan.price_annual : plan.price_monthly;
           const period = annual ? "/ano" : "/mês";
           const isPro = plan.name === "professional";
-          
+
           return (
-            <div key={plan.id} className={`bg-card rounded-xl p-6 border-2 transition-all relative ${isPro ? planColors.professional : isCurrent ? "border-gold-subtle" : planColors[plan.name]}`}>
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] as any }}
+              whileHover={{ scale: 1.02, y: -4 }}
+              className={`bg-card rounded-2xl p-6 border-2 transition-all relative shadow-card ${isPro ? planColors.professional : isCurrent ? "border-gold/30" : planColors[plan.name]}`}
+            >
               {isPro && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1 rounded-full bg-gradient-gold text-primary-foreground font-medium">Popular</span>}
               <Icon className="w-8 h-8 text-gold mb-3" />
               <h3 className="text-lg font-heading font-bold text-foreground">{planLabels[plan.name]}</h3>
@@ -139,7 +156,7 @@ const Subscription = () => {
               >
                 {isCurrent ? "Plano Atual" : "Upgrade"}
               </Button>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -179,7 +196,7 @@ const Subscription = () => {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

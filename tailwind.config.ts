@@ -15,8 +15,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Playfair Display', 'serif'],
-        body: ['DM Sans', 'sans-serif'],
+        heading: ['Playfair Display', 'Georgia', 'serif'],
+        body: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -56,6 +56,16 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
           dark: "hsl(var(--gold-dark))",
+          50: "hsl(43 80% 95%)",
+          100: "hsl(43 80% 88%)",
+          200: "hsl(43 80% 78%)",
+          300: "hsl(43 80% 68%)",
+          400: "hsl(43 74% 60%)",
+          500: "hsl(43 74% 55%)",
+          600: "hsl(43 70% 46%)",
+          700: "hsl(43 65% 38%)",
+          800: "hsl(43 60% 28%)",
+          900: "hsl(43 55% 18%)",
         },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
@@ -75,6 +85,20 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+      },
+      boxShadow: {
+        gold: "var(--shadow-gold)",
+        "gold-sm": "var(--shadow-gold-sm)",
+        card: "var(--shadow-card)",
+        glass: "var(--shadow-glass)",
+      },
+      backgroundImage: {
+        "gradient-gold": "var(--gradient-gold)",
+        "gradient-gold-subtle": "var(--gradient-gold-subtle)",
+        "gradient-dark": "var(--gradient-dark)",
+        "gradient-sidebar": "var(--gradient-sidebar)",
       },
       keyframes: {
         "accordion-down": {
@@ -85,10 +109,25 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        shimmerGold: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        glowPulse: {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "shimmer-gold": "shimmerGold 2.5s linear infinite",
+        float: "float 4s ease-in-out infinite",
+        "glow-pulse": "glowPulse 2s ease-in-out infinite",
       },
     },
   },

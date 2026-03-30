@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Plus, Check, X, Trash2, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { exportToCSV } from "@/lib/exportUtils";
@@ -101,11 +102,24 @@ const Expenses = () => {
   const totalAmount = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-end justify-between">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-6 md:p-8 space-y-6"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-end justify-between flex-wrap gap-4"
+      >
         <div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">Despesas</h1>
-          <p className="text-muted-foreground mt-1">Gestão de despesas de projeto</p>
+          <h1 className="text-3xl md:text-4xl font-heading font-bold text-gradient-gold">Despesas</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            Gestão de despesas de projeto ·{" "}
+            <span className="text-gold font-semibold">R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span> no período
+          </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild><Button variant="gold" size="sm"><Plus className="w-4 h-4" /> Nova Despesa</Button></DialogTrigger>
@@ -132,7 +146,7 @@ const Expenses = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* AI Expense Analysis */}
       <AIAssistantPanel
@@ -164,8 +178,14 @@ const Expenses = () => {
             )}
           </div>
           <div className="space-y-2">
-            {paginatedExpenses.map((e: any) => (
-              <div key={e.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between">
+            {paginatedExpenses.map((e: any, i: number) => (
+              <motion.div
+                key={e.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
+                className="bg-card rounded-xl p-4 border border-border hover:border-[var(--border-gold)] hover:bg-gold/3 flex items-center justify-between transition-all duration-200"
+              >
                 <div className="flex items-center gap-3">
                   <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggleSelect(e.id)} />
                   <div>
@@ -182,7 +202,7 @@ const Expenses = () => {
                     <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(e.id)}><Trash2 className="w-4 h-4" /></Button>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
           {filteredExpenses.length > 0 && (
@@ -210,7 +230,7 @@ const Expenses = () => {
           </TabsContent>
         )}
       </Tabs>
-    </div>
+    </motion.div>
   );
 };
 

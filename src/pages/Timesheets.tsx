@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import { Plus, ChevronLeft, ChevronRight, Check, X, Download, FileDown, Brain, Loader2 } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { useAIChat } from "@/lib/ai/useAIChat";
@@ -102,11 +103,24 @@ const Timesheets = () => {
   const paginatedEntries = filteredEntries.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-end justify-between">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-6 md:p-8 space-y-6"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-end justify-between flex-wrap gap-4"
+      >
         <div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">Timesheets</h1>
-          <p className="text-muted-foreground mt-1">Registro e aprovação de horas</p>
+          <h1 className="text-3xl md:text-4xl font-heading font-bold text-gradient-gold">Timesheets</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            Registro e aprovação de horas ·{" "}
+            <span className="text-gold font-semibold">{weekTotal}h</span> esta semana
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="gold-outline" size="sm" onClick={() => exportToCSV(entries.map(e => ({ Data: e.date, Projeto: (e as any).projects?.name || "—", Horas: e.hours, Billable: e.billable ? "Sim" : "Não", Notas: e.notes || "" })), "timesheets")}>
@@ -149,7 +163,7 @@ const Timesheets = () => {
           </DialogContent>
         </Dialog>
         </div>
-      </div>
+      </motion.div>
 
       <Tabs defaultValue="my">
         <TabsList className="bg-secondary">
@@ -171,17 +185,24 @@ const Timesheets = () => {
             {weekDays.map((day, i) => {
               const dayEntries = entries.filter((e) => e.date === day);
               const dayTotal = dayEntries.reduce((s: number, e: any) => s + Number(e.hours), 0);
+              const isToday = day === new Date().toISOString().split("T")[0];
               return (
-                <div key={day} className="bg-card rounded-lg p-3 border border-border min-h-[120px]">
+                <motion.div
+                  key={day}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
+                  className={`rounded-xl p-3 border min-h-[120px] transition-colors ${isToday ? "bg-gold/5 border-gold/30" : "bg-card border-border hover:border-[var(--border-gold)]"}`}
+                >
                   <div className="text-xs text-muted-foreground mb-1">{dayNames[i]}</div>
-                  <div className="text-xs text-foreground font-medium mb-2">{day.slice(5)}</div>
+                  <div className={`text-xs font-semibold mb-2 ${isToday ? "text-gold" : "text-foreground"}`}>{day.slice(5)}</div>
                   {dayEntries.map((e: any) => (
-                    <div key={e.id} className="text-xs bg-secondary rounded px-1.5 py-0.5 mb-1 truncate">
+                    <div key={e.id} className="text-[10px] bg-secondary/70 rounded-md px-1.5 py-0.5 mb-1 truncate border border-border">
                       {e.hours}h · {e.projects?.name?.slice(0, 10)}
                     </div>
                   ))}
                   {dayTotal > 0 && <div className="text-xs font-bold text-gold mt-1">{dayTotal}h</div>}
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -192,8 +213,14 @@ const Timesheets = () => {
           </div>
 
           <div className="space-y-2">
-            {paginatedEntries.map((e: any) => (
-              <div key={e.id} className="bg-card rounded-lg p-3 border border-border flex items-center justify-between">
+            {paginatedEntries.map((e: any, idx: number) => (
+              <motion.div
+                key={e.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] as any }}
+                className="bg-card rounded-xl p-3 border border-border hover:border-[var(--border-gold)] hover:bg-gold/3 flex items-center justify-between transition-all duration-200"
+              >
                 <div>
                   <p className="text-sm text-foreground">{e.projects?.name} · {e.date}</p>
                   {e.notes && <p className="text-xs text-muted-foreground">{e.notes}</p>}
@@ -202,7 +229,7 @@ const Timesheets = () => {
                   <p className="text-sm font-medium text-foreground">{e.hours}h</p>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${e.approval_status === "approved" ? "bg-success/20 text-success" : e.approval_status === "rejected" ? "bg-destructive/20 text-destructive" : "bg-warning/20 text-warning"}`}>{e.approval_status}</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -230,7 +257,7 @@ const Timesheets = () => {
           </TabsContent>
         )}
       </Tabs>
-    </div>
+    </motion.div>
   );
 };
 

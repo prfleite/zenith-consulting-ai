@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileText, Plus, Loader2, Send, Eye, CheckCircle2, Clock, BarChart3, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -109,25 +110,49 @@ const Reports = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-6 md:p-8 space-y-6"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-end justify-between flex-wrap gap-4"
+      >
         <div>
-          <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
-            <FileText className="w-7 h-7 text-gold" /> Relatórios
+          <h1 className="text-3xl md:text-4xl font-heading font-bold text-gradient-gold">
+            Relatórios
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Geração automática de relatórios com IA</p>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            Geração automática de relatórios com IA
+          </p>
         </div>
-        <Button onClick={() => setShowGenerator(true)} className="bg-gradient-gold text-primary-foreground">
-          <Plus className="w-4 h-4 mr-2" /> Gerar Relatório com IA
+        <Button onClick={() => setShowGenerator(true)} variant="gold" className="gap-2">
+          <Plus className="w-4 h-4" /> Gerar Relatório com IA
         </Button>
-      </div>
+      </motion.div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-border"><CardContent className="pt-4"><div className="text-2xl font-bold">{summaries.total}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><FileText className="w-3 h-3" /> Total</div></CardContent></Card>
-        <Card className="border-border"><CardContent className="pt-4"><div className="text-2xl font-bold">{summaries.draft}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> Rascunhos</div></CardContent></Card>
-        <Card className="border-border"><CardContent className="pt-4"><div className="text-2xl font-bold">{summaries.sent}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><Send className="w-3 h-3" /> Enviados</div></CardContent></Card>
-        <Card className="border-border"><CardContent className="pt-4"><div className="text-2xl font-bold">{summaries.viewed}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><Eye className="w-3 h-3" /> Visualizados</div></CardContent></Card>
+        <div className="bg-card rounded-2xl p-4 border border-border hover:border-[var(--border-gold)] transition-all duration-200">
+          <div className="text-2xl font-bold font-heading text-foreground">{summaries.total}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><FileText className="w-3 h-3" /> Total</div>
+        </div>
+        <div className="bg-card rounded-2xl p-4 border border-border hover:border-[var(--border-gold)] transition-all duration-200">
+          <div className="text-2xl font-bold font-heading text-foreground">{summaries.draft}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Clock className="w-3 h-3" /> Rascunhos</div>
+        </div>
+        <div className="bg-card rounded-2xl p-4 border border-border hover:border-[var(--border-gold)] transition-all duration-200">
+          <div className="text-2xl font-bold font-heading text-success">{summaries.sent}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Send className="w-3 h-3" /> Enviados</div>
+        </div>
+        <div className="bg-card rounded-2xl p-4 border border-border hover:border-[var(--border-gold)] transition-all duration-200">
+          <div className="text-2xl font-bold font-heading text-info">{summaries.viewed}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Eye className="w-3 h-3" /> Visualizados</div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -228,7 +253,7 @@ const Reports = () => {
           <div className="prose prose-invert prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewReport?.content_html || previewReport?.contentHtml || "<p>Sem conteúdo</p>" }} />
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 };
 

@@ -212,9 +212,9 @@ const Analytics = () => {
   }, [nps]);
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-heading font-bold text-foreground">Analytics Avançado</h1>
+        <h1 className="text-3xl font-heading font-bold text-gradient-gold">Analytics Avançado</h1>
         <p className="text-muted-foreground mt-1">Análises detalhadas por área</p>
       </div>
 

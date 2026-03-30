@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Users, Calendar, AlertTriangle, TrendingUp, Sparkles, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,16 +96,26 @@ const Resources = () => {
   };
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
-      <div className="flex items-end justify-between">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-8 space-y-6"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-end justify-between"
+      >
         <div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">Recursos & Capacidade</h1>
+          <h1 className="text-3xl font-heading font-bold text-gradient-gold">Recursos & Capacidade</h1>
           <p className="text-muted-foreground mt-1">Alocação e disponibilidade da equipe</p>
         </div>
-        <Button variant="gold" size="sm" onClick={() => setShowAI(!showAI)}>
+        <Button variant="gold" size="sm" onClick={() => setShowAI(!showAI)} className="gap-2">
           <Sparkles className="w-4 h-4" /> Sugerir Alocação com IA
         </Button>
-      </div>
+      </motion.div>
 
       {/* AI Panel */}
       {showAI && (
@@ -127,42 +138,58 @@ const Resources = () => {
 
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <span className="text-xs text-muted-foreground">Consultores</span>
-          <p className="text-2xl font-bold text-foreground">{profiles.length}</p>
-        </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <span className="text-xs text-muted-foreground">Projetos Ativos</span>
-          <p className="text-2xl font-bold text-foreground">{projects.length}</p>
-        </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <span className="text-xs text-muted-foreground">Sobrealoc.</span>
-          <p className="text-2xl font-bold text-destructive">{consultantData.filter(c => c.status === "over").length}</p>
-        </div>
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <span className="text-xs text-muted-foreground">Bench</span>
-          <p className="text-2xl font-bold text-warning">{consultantData.filter(c => c.status === "bench").length}</p>
-        </div>
+        {[
+          { label: "Consultores", value: profiles.length, color: "text-gold" },
+          { label: "Projetos Ativos", value: projects.length, color: "text-info" },
+          { label: "Sobrealoc.", value: consultantData.filter(c => c.status === "over").length, color: "text-destructive" },
+          { label: "Bench", value: consultantData.filter(c => c.status === "bench").length, color: "text-warning" },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] as any }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            className="bg-card rounded-xl p-4 border border-border hover:border-[var(--border-gold-hover)] hover:shadow-gold-sm transition-all duration-300"
+          >
+            <span className="text-xs text-muted-foreground">{s.label}</span>
+            <p className={`text-2xl font-bold font-heading ${s.color}`}>{s.value}</p>
+          </motion.div>
+        ))}
       </div>
 
       {/* Consultant Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {consultantData.map((c) => (
-          <div key={c.id} className={`rounded-xl p-5 border ${statusColors[c.status]}`}>
+        {consultantData.map((c, idx) => (
+          <motion.div
+            key={c.id}
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: idx * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] as any }}
+            whileHover={{ scale: 1.01, y: -2 }}
+            className={`rounded-2xl p-5 border transition-all duration-300 shadow-card ${statusColors[c.status]}`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-sm font-medium text-foreground">{c.name}</p>
+                <p className="text-sm font-semibold text-foreground">{c.name}</p>
                 <p className="text-xs text-muted-foreground capitalize">{c.role}</p>
               </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{statusLabels[c.status]}</span>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-secondary/50 text-muted-foreground font-medium border border-border">
+                {statusLabels[c.status]}
+              </span>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Utilização</span>
-                <span className="font-medium text-foreground">{c.utilization}%</span>
+                <span className="font-bold text-foreground">{c.utilization}%</span>
               </div>
-              <div className="w-full h-2 bg-secondary/50 rounded-full">
-                <div className={`h-full rounded-full ${c.utilization > 90 ? "bg-destructive" : c.utilization > 60 ? "bg-success" : "bg-warning"}`} style={{ width: `${Math.min(c.utilization, 100)}%` }} />
+              <div className="w-full h-2 bg-secondary/50 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(c.utilization, 100)}%` }}
+                  transition={{ delay: 0.3 + idx * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] as any }}
+                  className={`h-full rounded-full ${c.utilization > 90 ? "bg-destructive" : c.utilization > 60 ? "bg-success" : "bg-warning"}`}
+                />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{c.billable}h billable</span>
@@ -171,18 +198,18 @@ const Resources = () => {
               {c.projects.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {c.projects.map((p: string, i: number) => (
-                    <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p}</span>
+                    <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-secondary/60 text-muted-foreground border border-border">{p}</span>
                   ))}
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Capacity Heatmap */}
-      <div className="bg-card rounded-xl p-6 border border-border">
-        <h3 className="text-lg font-heading font-semibold text-foreground mb-4">Capacity Planner — Próximas 12 Semanas</h3>
+      <div className="bg-card rounded-2xl p-6 border border-border shadow-card">
+        <h3 className="text-lg font-heading font-semibold text-gradient-gold mb-4">Capacity Planner — Próximas 12 Semanas</h3>
         <div className="grid grid-cols-12 gap-2">
           {weeks.map((w) => (
             <div key={w.week} className="text-center">
@@ -205,7 +232,7 @@ const Resources = () => {
           <span className="flex items-center gap-1"><div className="w-3 h-3 rounded bg-muted" /> &lt;50% Bench</span>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

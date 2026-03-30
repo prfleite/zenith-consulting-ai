@@ -92,7 +92,7 @@ const OpportunityDetail = () => {
   const stageColors: Record<string, string> = { lead: "bg-info/20 text-info", qualified: "bg-gold/20 text-gold", proposal: "bg-warning/20 text-warning", negotiation: "bg-gold-light/20 text-gold-light", won: "bg-success/20 text-success", lost: "bg-destructive/20 text-destructive" };
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in max-w-5xl">
+    <div className="p-8 space-y-6 max-w-5xl">
       <Breadcrumbs entityName={opp.title} />
       <Link to="/opportunities" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" /> Voltar para Oportunidades
@@ -104,7 +104,7 @@ const OpportunityDetail = () => {
             <Target className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold text-foreground">{opp.title}</h1>
+            <h1 className="text-2xl font-heading font-bold text-gradient-gold">{opp.title}</h1>
             <Link to={`/clients/${opp.client_account?.id}`} className="text-sm text-gold hover:underline flex items-center gap-1">
               <Building2 className="w-3.5 h-3.5" /> {opp.client_account?.name}
             </Link>
