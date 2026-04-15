@@ -26,7 +26,7 @@ npm ci OK; lint failed with 254 errors; test OK; build OK; dist 3.5M
 - [x] Re-run npm ci, lint, tests, and production build locally.
 - [ ] Future: replace template README with product-specific documentation where still needed.
 - [ ] Future: add domain tests beyond the generated smoke test.
-- [ ] Future: evaluate breaking dependency upgrades for Vite/PWA/jsdom where audit still reports residual risk.
+- [x] Zero residual audit risk by upgrading Vite/Vitest/jsdom and removing vulnerable PWA generation.
 
 ## Acceptance Criteria
 
@@ -41,5 +41,5 @@ npm ci OK; lint failed with 254 errors; test OK; build OK; dist 3.5M
 ## Risks
 
 - Turning deep TypeScript strictness back on will require dedicated refactors across generated pages and Supabase functions.
-- Remaining audit issues that require --force may pull major versions and need a separate compatibility pass.
+- PWA/service-worker generation was removed to avoid vulnerable Workbox/serialize-javascript dependencies; reintroduce only with a clean compatible stack.
 - Most tests are smoke tests, so green builds do not imply strong domain coverage.
